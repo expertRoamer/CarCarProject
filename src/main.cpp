@@ -4,23 +4,18 @@
 
 #include "PinManager.h"
 #include "MotorSystem.h"
+#include "IRSensorSystem.h"
+#include "Constants.h"
+#include "PIDController.h"
 
-// IR value
-double left;
-double left_center;
-double center;
-double right;
-double right_center;
 MFRC522 *mfrc522;
 
-double before_error;
-double Kd = -0.005;
+PIDController IR_PID(80, 0.0, 0.0);
 
-int normal_speed = 150;
-
-double speed();
-int maxIR();
-void MoveFor(double, double, double);
+String path = "FBRBFBLBF";
+bool atNode = false;
+bool first = true;
+double turnLast = 0.0;
 
 void setup() {
   	pinMode(MOTOR_PWMA, OUTPUT);
@@ -38,6 +33,7 @@ void setup() {
   	pinMode(IR_RIGHT, INPUT);
   
 	Serial.begin(9600);
+
 	// 藍芽
 	// SPI.begin(); 
 	
@@ -50,80 +46,48 @@ void setup() {
 	// Serial.println(F("Read UID on a MIFARE PICC:")); 
 }
 
+void runPath() {
+		char command = path.charAt(0);
+		Serial.println(command);
+
+		if (command == 'F') {
+			driveKinematic(NORMAL_SPEED, turnLast);
+		} else if (command == 'L') {
+			drive(0.0, NORMAL_SPEED);
+		} else if (command == 'R') {
+			drive(NORMAL_SPEED, 0.0);
+		} else if (command == 'B') {
+			drive(-NORMAL_SPEED, NORMAL_SPEED);
+		}
+}
+
 void loop() { 
-	// MoveForward(200,200);
-	Serial.print(analogRead(IR_LEFT));
-	Serial.print(" ");
-	Serial.print(analogRead(IR_LEFT_CENTER));
-	Serial.print(" ");
-	Serial.print(analogRead(IR_CENTER));
-	Serial.print(" ");
-	Serial.print(analogRead(IR_RIGHT_CENTER));
-	Serial.print(" ");
-	Serial.println(analogRead(IR_RIGHT));
+	readIRValues();
+	Serial.print(getWeightedAvg());
 
-	Serial.println(normal_speed * (1 - speed()));
-	Serial.print(" ");
-	Serial.println(normal_speed * (1 + speed()));
-	Serial.print(" ");
-	Serial.println(maxIR());
-
-	left = analogRead(IR_LEFT);
-	left_center = analogRead(IR_LEFT_CENTER);
-	center = analogRead(IR_CENTER);
-	right_center = analogRead(IR_RIGHT_CENTER);
-	right = analogRead(IR_RIGHT);
-
-	// MoveFor(normal_speed * (1 - speed()), normal_speed * (1 + speed()) , 5);
-
-	before_error = speed();
-
-	drive(100.0, -100.0, 5000);
-	delay(2000);
-}
-
-double speed() {
-	double difference;
-	double error = 0;
-	double P = 0.004;
-	if (maxIR() == 0) {
-		error = 4 * 0.2;
-	}
-	if (maxIR() == 1) {
-		error = 0.6;
-	}
-	if (maxIR() == 3) {
-		error = -1 * 0.6;
-	}
-	if (maxIR() == 4) {
-		error = -4 * 0.2;
-	}
-	difference = (error - before_error) / 0.01;
-	//return P * error;
-	return error + difference * Kd;
-	//positive:left decrease etc
-}
-
-int maxIR() {
-	if (left >= center && left >= right && left >= left_center && left >= right_center) {
-		return 0;
-	}
-	if (left_center >= left && left_center >= right && left_center >= center && left_center >= right_center) {
-		return 1;
-	}
-	if (center >= left && center >= right && center >= left_center && center >= right_center) {
-		return 2;
-	}
-	if (right_center >= left && right_center >= right && right_center >= left_center && right_center >= center) {
-		return 3;
-	}
-	if (right >= left && right >= center && right >= left_center && right >= right_center) {
-		return 4;
+	if (atNode) {
+		if (getCenterIRValue() > 100 && getLeftIRValue() < 200 && getRightIRValue() < 200) {
+			atNode = false;
+			path.remove(0, 1);
+		} else {
+			runPath();
+		}
+	} else {
+		if (getLeftIRValue() > 200 && getRightIRValue() > 200) {
+			atNode = true;
+		} else {
+			double turn = IR_PID.calculate(getWeightedAvg());
+			driveKinematic(NORMAL_SPEED, turn);
+			turnLast = turn;
+		}
 	}
 
-	return 2;
-}
-
-double difference() {
+	// double turn = IR_PID.calculate(getWeightedAvg());
+	// driveKinematic(NORMAL_SPEED, turn);
 	
+	
+
+
+
+	delay(TIME_STEP);
 }
