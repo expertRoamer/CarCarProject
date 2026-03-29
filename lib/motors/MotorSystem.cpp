@@ -3,18 +3,21 @@
 #include "PinManager.h"
 #include <Arduino.h>
 
-void driveKinematic(double speed, double turn) {
+void driveKinematic(double speed, double turn)
+{
     double vL = speed + turn;
     double vR = speed - turn;
     drive(vL, vR);
 }
 
-void drive(double vL, double vR) {
+void drive(double vL, double vR)
+{
     driveLeft(vL);
     driveRight(vR);
 }
 
-void driveFor(double vL, double vR, int time) {
+void driveFor(double vL, double vR, int time)
+{
     driveLeft(vL);
     driveRight(vR);
     delay(time);
@@ -22,23 +25,28 @@ void driveFor(double vL, double vR, int time) {
     driveRight(0);
 }
 
-void driveLeft(double v) {
+void driveLeft(double v)
+{
     driveIndividual(MOTOR_PWMA, MOTOR_AIN1, MOTOR_AIN2, v);
 }
 
-void driveRight(double v) {
-    v *= 0.966; // scaling adjustment for right motor
+void driveRight(double v)
+{
+    v *= SPEED_ADUSTING_CONSTANT; // scaling adjustment for right motor
     driveIndividual(MOTOR_PWMB, MOTOR_BIN1, MOTOR_BIN2, v);
 }
 
-void driveIndividual(int pwm, int in1, int in2, double v) {
-    if (abs(v) < 1) {
+void driveIndividual(int pwm, int in1, int in2, double v)
+{
+    if (abs(v) < 1)
+    {
         digitalWrite(in1, LOW);
         digitalWrite(in2, LOW);
         return;
     }
 
-    if (abs(v) > 255) {
+    if (abs(v) > 255)
+    {
         v = 255 * (v > 0 ? 1 : -1);
     }
 
