@@ -3,7 +3,8 @@
 
 #include "Constants.h"
 
-class PIDController {
+class PIDController
+{
 public:
     double Kp;
     double Ki;
@@ -11,26 +12,31 @@ public:
 
     PIDController(double Kp, double Ki, double Kd) : Kp(Kp), Ki(Ki), Kd(Kd) {}
 
-    double calculate(double error) {
-        if (firstRun) {
+    double calculate(double error)
+    {
+        if (firstRun)
+        {
             lastError = error;
             firstRun = false;
-        } else {
+        }
+        else
+        {
             integral += error * TIME_STEP;
         }
 
         double derivative = (error - lastError) / TIME_STEP;
-        Serial.print("P: ");
-        Serial.print(Kp * error);
-        Serial.print(" I: ");
-        Serial.print(Ki * integral);
-        Serial.print(" D: ");
-        Serial.println(Kd * derivative);
+        // Serial.print("P: ");
+        // Serial.print(Kp * error);
+        // Serial.print(" I: ");
+        // Serial.print(Ki * integral);
+        // Serial.print(" D: ");
+        // Serial.println(Kd * derivative);
         lastError = error;
         return Kp * error + Ki * integral + Kd * derivative;
     }
 
-    void reset() {
+    void reset()
+    {
         integral = 0.0;
         lastError = 0.0;
         firstRun = true;
