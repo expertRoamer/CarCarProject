@@ -1,5 +1,5 @@
 #include <Arduino.h>
-// RFID¼Ò²Õ
+// RFIDï¿½Ò²ï¿½
 #include <SPI.h>
 #include <MFRC522.h>
 
@@ -21,6 +21,8 @@ bool first = true;
 double turnLast = 0.0;
 
 void runPath();
+int num = 0;
+int sum[5] = {};
 
 void setup()
 {
