@@ -8,6 +8,7 @@
 #include "IRSensorSystem.h"
 #include "RFIDSystem.h"
 #include "Constants.h"
+#include "BluetoothSystem.h"
 #include "PIDController.h"
 
 MFRC522 *mfrc522;
@@ -18,6 +19,8 @@ String path = "RBRBRBRB";
 bool atNode = false;
 bool first = true;
 double turnLast = 0.0;
+
+void runPath();
 
 void setup()
 {
@@ -39,19 +42,15 @@ void setup()
 
 	SPI.begin();
 	mfrc522 = new MFRC522(SS_PIN, RST_PIN);
-	// 請系統去要一塊記憶體空間，後面呼叫它的建構函式
-	// 將(SS, RST) 當成參數傳進去初始化。
 	mfrc522->PCD_Init();
-	/* 初始化MFRC522讀卡機PCD_Init 模組。-> 表示：
-	透過記憶體位置，找到mfrc522 這物件，再翻其內容。*/
-	// Serial.println(F("Read UID on a MIFARE PICC:"));
+
+	BlueToothInit();
 }
-void runPath();
 
 void loop()
 {
 	CardDectecting(mfrc522);
-
+	BlueTooth();
 	readIRValues();
 
 	if (atNode)
