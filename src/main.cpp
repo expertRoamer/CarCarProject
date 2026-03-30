@@ -16,6 +16,8 @@ String path = "RBRBRBRB";
 bool atNode = false;
 bool first = true;
 double turnLast = 0.0;
+int num = 0;
+int sum[5] = {};
 
 void setup() {
   	pinMode(MOTOR_PWMA, OUTPUT);
@@ -86,4 +88,12 @@ void loop() {
 	}
 
 	delay(TIME_STEP);
+
+	num ++;
+	getAverage(sum);
+	for (int i = 0; i < 5; i ++) {
+		Serial.print(sum[i] * 1.0 / num);
+		Serial.print(" ");
+	}
+	Serial.println("");
 }

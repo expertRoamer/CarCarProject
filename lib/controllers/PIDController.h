@@ -20,12 +20,12 @@ public:
         }
 
         double derivative = (error - lastError) / TIME_STEP;
-        Serial.print("P: ");
-        Serial.print(Kp * error);
-        Serial.print(" I: ");
-        Serial.print(Ki * integral);
-        Serial.print(" D: ");
-        Serial.println(Kd * derivative);
+        // Serial.print("P: ");
+        // Serial.print(Kp * error);
+        // Serial.print(" I: ");
+        // Serial.print(Ki * integral);
+        // Serial.print(" D: ");
+        // Serial.println(Kd * derivative);
         lastError = error;
         return Kp * error + Ki * integral + Kd * derivative;
     }
