@@ -13,4 +13,8 @@ void driveRight(double);
 
 void driveIndividual(int, int, int, double);
 
+void back(int, int, int, int , int, int);
+
+bool startPID(int, int, int, int, int, int);
+
 #endif // MOTORSYSTEM_H
