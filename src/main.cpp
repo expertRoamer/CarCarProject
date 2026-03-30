@@ -1,10 +1,12 @@
 #include <Arduino.h>
-#include <SPI.h> 
+// RFID�Ҳ�
+#include <SPI.h>
 #include <MFRC522.h>
 
 #include "PinManager.h"
 #include "MotorSystem.h"
 #include "IRSensorSystem.h"
+#include "RFIDSystem.h"
 #include "Constants.h"
 #include "PIDController.h"
 
@@ -19,68 +21,66 @@ double turnLast = 0.0;
 int num = 0;
 int sum[5] = {};
 
-void setup() {
-  	pinMode(MOTOR_PWMA, OUTPUT);
-  	pinMode(MOTOR_AIN1, OUTPUT);
-  	pinMode(MOTOR_AIN2, OUTPUT);
+void setup()
+{
+	pinMode(MOTOR_PWMA, OUTPUT);
+	pinMode(MOTOR_AIN1, OUTPUT);
+	pinMode(MOTOR_AIN2, OUTPUT);
 
-  	pinMode(MOTOR_PWMB, OUTPUT);
-  	pinMode(MOTOR_BIN1, OUTPUT);
-  	pinMode(MOTOR_BIN2, OUTPUT);
+	pinMode(MOTOR_PWMB, OUTPUT);
+	pinMode(MOTOR_BIN1, OUTPUT);
+	pinMode(MOTOR_BIN2, OUTPUT);
 
-  	pinMode(IR_LEFT, INPUT);
-  	pinMode(IR_LEFT_CENTER, INPUT);
-  	pinMode(IR_CENTER, INPUT);
-  	pinMode(IR_RIGHT_CENTER, INPUT);
-  	pinMode(IR_RIGHT, INPUT);
-  
+	pinMode(IR_LEFT, INPUT);
+	pinMode(IR_LEFT_CENTER, INPUT);
+	pinMode(IR_CENTER, INPUT);
+	pinMode(IR_RIGHT_CENTER, INPUT);
+	pinMode(IR_RIGHT, INPUT);
+
 	Serial.begin(9600);
 
-	// 藍芽
-	// SPI.begin(); 
-	
-	// mfrc522 = new MFRC522(SS_PIN, RST_PIN); 
-	// // 請系統去要一塊記憶體空間，後面呼叫它的建構函式
-	// // 將(SS, RST) 當成參數傳進去初始化。
-	// mfrc522->PCD_Init(); 
-	// /* 初始化MFRC522讀卡機PCD_Init 模組。
-	// -> 表示：透過記憶體位置，找到mfrc522 這物件，再翻其內容。*/
-	// Serial.println(F("Read UID on a MIFARE PICC:")); 
+	SPI.begin();
+	mfrc522 = new MFRC522(SS_PIN, RST_PIN);
+	// �Шt�Υh�n�@���O����Ŷ��A�᭱�I�s�����غc�禡
+	// �N(SS, RST) �����ѼƶǶi�h��l�ơC
+	mfrc522->PCD_Init();
+	/* ��l��MFRC522Ū�d��PCD_Init �ҲաC-> ���ܡG
+	�z�L�O�����m�A���mfrc522 �o����A�A½�䤺�e�C*/
+	// Serial.println(F("Read UID on a MIFARE PICC:"));
 }
+void runPath();
 
-void runPath() {
-		char command = path.charAt(0);
-		Serial.println(command);
+void loop()
+{
+	CardDectecting(mfrc522);
 
-		if (command == 'F') {
-			driveKinematic(NORMAL_SPEED, 0);
-		} else if (command == 'L') {
-			drive(0, 255);
-		} else if (command == 'R') {
-			drive(255, 0);
-		} else if (command == 'B') {
-			back(150, 150, getCenterIRValue(), getLeftCenterIRValue(), getRightCenterIRValue(), getRightIRValue());
-		}
-}
-
-void loop() { 
 	readIRValues();
 
-	if (atNode) {
-		if ((getCenterIRValue() + getLeftCenterIRValue() + getRightCenterIRValue()) > 200 && getLeftIRValue() < 100 && getRightIRValue() < 100) {
-			atNode = false;
-			path.remove(0, 1);
-		} else if (path[0] == 'B' && startPID(150, 150, getLeftIRValue(), getLeftCenterIRValue(), getRightIRValue(), getRightCenterIRValue())) {
+	if (atNode)
+	{
+		if ((getCenterIRValue() + getLeftCenterIRValue() + getRightCenterIRValue()) > 200 && getLeftIRValue() < 100 && getRightIRValue() < 100)
+		{
 			atNode = false;
 			path.remove(0, 1);
 		}
-		else {
+		else if (path[0] == 'B' && startPID(150, 150, getLeftIRValue(), getLeftCenterIRValue(), getRightIRValue(), getRightCenterIRValue()))
+		{
+			atNode = false;
+			path.remove(0, 1);
+		}
+		else
+		{
 			runPath();
 		}
-	} else {
-		if (getLeftIRValue() > 200 && getRightIRValue() > 200) {
+	}
+	else
+	{
+		if (getLeftIRValue() > 200 && getRightIRValue() > 200)
+		{
 			atNode = true;
-		} else {
+		}
+		else
+		{
 			double turn = IR_PID.calculate(getWeightedAvg());
 			driveKinematic(NORMAL_SPEED, turn);
 			turnLast = turn;
@@ -88,12 +88,27 @@ void loop() {
 	}
 
 	delay(TIME_STEP);
+}
 
-	num ++;
-	getAverage(sum);
-	for (int i = 0; i < 5; i ++) {
-		Serial.print(sum[i] * 1.0 / num);
-		Serial.print(" ");
+void runPath()
+{
+	char command = path.charAt(0);
+	// Serial.println(command);
+
+	if (command == 'F')
+	{
+		driveKinematic(NORMAL_SPEED, 0);
 	}
-	Serial.println("");
+	else if (command == 'L')
+	{
+		drive(0, 255);
+	}
+	else if (command == 'R')
+	{
+		drive(255, 0);
+	}
+	else if (command == 'B')
+	{
+		back(150, 150, getCenterIRValue(), getLeftCenterIRValue(), getRightCenterIRValue(), getRightIRValue());
+	}
 }
