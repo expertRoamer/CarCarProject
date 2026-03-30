@@ -1,4 +1,4 @@
-# CarCarProject����
+# CarCarProject
 2026 class 02 (Monday afternoon) Group 6
 
 Memeber:王宥翔(B14901071) 
