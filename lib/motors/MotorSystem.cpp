@@ -2,6 +2,7 @@
 #include "Constants.h"
 
 #include "PinManager.h"
+#include "Constants.h"
 #include <Arduino.h>
 
 void driveKinematic(double speed, double turn)
@@ -37,10 +38,8 @@ void driveRight(double v)
     driveIndividual(MOTOR_PWMB, MOTOR_BIN1, MOTOR_BIN2, v);
 }
 
-void driveIndividual(int pwm, int in1, int in2, double v)
-{
-    if (abs(v) < 1)
-    {
+void driveIndividual(int pwm, int in1, int in2, double v) {
+    if (abs(v) < 1) {
         digitalWrite(in1, LOW);
         digitalWrite(in2, LOW);
         return;
@@ -54,4 +53,13 @@ void driveIndividual(int pwm, int in1, int in2, double v)
     analogWrite(pwm, abs(v));
     digitalWrite(in1, v > 0 ? HIGH : LOW);
     digitalWrite(in2, v > 0 ? LOW : HIGH);
+}
+
+void back(int left_bound, int right_bound, int leftIR, int left_centerIR, int rightIR, int right_centerIR) {
+    if ((leftIR + left_centerIR > left_bound) && (rightIR + right_centerIR < right_bound)) drive(NORMAL_SPEED, NORMAL_SPEED);
+    else drive(-NORMAL_SPEED, NORMAL_SPEED);
+}
+
+bool startPID(int left_bound, int right_bound, int leftIR, int left_centerIR, int rightIR, int right_centerIR) {
+    return ((leftIR + left_centerIR > left_bound) && (rightIR + right_centerIR < right_bound));
 }

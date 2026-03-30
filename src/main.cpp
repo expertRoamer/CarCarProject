@@ -12,7 +12,7 @@ MFRC522 *mfrc522;
 
 PIDController IR_PID(80, 0.0, 0.0);
 
-String path = "FBRBFBLBF";
+String path = "RBRBRBRB";
 bool atNode = false;
 bool first = true;
 double turnLast = 0.0;
@@ -51,25 +51,28 @@ void runPath() {
 		Serial.println(command);
 
 		if (command == 'F') {
-			driveKinematic(NORMAL_SPEED, turnLast);
+			driveKinematic(NORMAL_SPEED, 0);
 		} else if (command == 'L') {
-			drive(0.0, NORMAL_SPEED);
+			drive(0, 255);
 		} else if (command == 'R') {
-			drive(NORMAL_SPEED, 0.0);
+			drive(255, 0);
 		} else if (command == 'B') {
-			drive(-NORMAL_SPEED, NORMAL_SPEED);
+			back(150, 150, getCenterIRValue(), getLeftCenterIRValue(), getRightCenterIRValue(), getRightIRValue());
 		}
 }
 
 void loop() { 
 	readIRValues();
-	Serial.print(getWeightedAvg());
 
 	if (atNode) {
-		if (getCenterIRValue() > 100 && getLeftIRValue() < 200 && getRightIRValue() < 200) {
+		if ((getCenterIRValue() + getLeftCenterIRValue() + getRightCenterIRValue()) > 200 && getLeftIRValue() < 100 && getRightIRValue() < 100) {
 			atNode = false;
 			path.remove(0, 1);
-		} else {
+		} else if (path[0] == 'B' && startPID(150, 150, getLeftIRValue(), getLeftCenterIRValue(), getRightIRValue(), getRightCenterIRValue())) {
+			atNode = false;
+			path.remove(0, 1);
+		}
+		else {
 			runPath();
 		}
 	} else {
@@ -81,13 +84,6 @@ void loop() {
 			turnLast = turn;
 		}
 	}
-
-	// double turn = IR_PID.calculate(getWeightedAvg());
-	// driveKinematic(NORMAL_SPEED, turn);
-	
-	
-
-
 
 	delay(TIME_STEP);
 }

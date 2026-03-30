@@ -5,8 +5,6 @@ void readIRValues();
 
 void printIRValues();
 
-void printAvg();
-
 double getWeightedAvg();
 
 int getLeftIRValue();
