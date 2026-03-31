@@ -1,6 +1,6 @@
+#include <Arduino.h>
+#include "Constants.h"
 #include "BluetoothSystem.h"
-
-#define CUSTOM_NAME "HM10_G6"
 
 long baudRates[] = {9600, 19200, 38400, 57600, 115200, 4800, 2400, 1200, 230400};
 bool moduleReady = false;
@@ -70,8 +70,8 @@ void BlueToothInit()
 
     // 4. Set Custom Name via Macro
     Serial.print("Setting name to: ");
-    Serial.println(CUSTOM_NAME);
-    String nameCmd = "AT+NAME" + String(CUSTOM_NAME);
+    Serial.println(CARCAR_NAME);
+    String nameCmd = "AT+NAME" + String(CARCAR_NAME);
     sendATCommand(nameCmd.c_str()); // Max length is 12
 
     // 5. Enable Connection Notifications

@@ -4,5 +4,6 @@
 #define TIME_STEP 10
 #define SPEED_ADUSTING_CONSTANT 0.966
 #define NORMAL_SPEED 200
+#define CARCAR_NAME "HM10_G6"
 
 #endif // CONSTANTS_H

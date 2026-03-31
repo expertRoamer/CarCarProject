@@ -1,5 +1,4 @@
 #include <Arduino.h>
-// RFID�Ҳ�
 #include <SPI.h>
 #include <MFRC522.h>
 
