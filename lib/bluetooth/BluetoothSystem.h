@@ -7,5 +7,6 @@ void sendATCommand(const char *command);
 
 void BlueToothInit();
 
-void BlueTooth();
+String BlueTooth();
+
 #endif // BLUETOOTHSYSTEM_H

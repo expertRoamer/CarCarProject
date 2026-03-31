@@ -90,43 +90,50 @@ void BlueToothInit()
 
     Serial.println("Initialization Complete.");
 }
-void BlueTooth()
+String BlueTooth()
 {
-    // 1. Module to PC: Forward HM-10 responses to the Serial Monitor
+    String command = "";
+
+    // 1. CarCar to PC: Forward HM-10 responses to the Serial Monitor
     if (Serial3.available())
     {
-        Serial.println(Serial3.readString());
+        command = Serial3.readString();
+        command.trim(); // 【重要】去除掉 \r 或 \n，否則 if ("F") 會判斷失敗
+
+        // 偵錯用：在電腦螢幕看到收到了什麼
+        Serial.print("Bluetooth Received: [");
+        Serial.print(command);
+        Serial.println("]");
     }
 
-    // 2. PC to Module: Read user input and truncate line endings
+    // 2. PC to CarCar: Read user input and truncate line endings
     if (Serial.available())
     {
-        static String inputBuffer = "";
-
+        static String pcInputBuffer = "";
         while (Serial.available())
         {
             char c = Serial.read();
-
-            // Check if the character is a line ending
             if (c == '\r' || c == '\n')
             {
-                if (inputBuffer.length() > 0)
+                if (pcInputBuffer.length() > 0)
                 {
-                    // Send the clean string to the HM-10
-                    Serial3.print(inputBuffer);
-
-                    // Debug: Show what was actually sent
-                    Serial.print("\n[Sent to HM-10: ");
-                    Serial.print(inputBuffer);
+                    Serial3.print(pcInputBuffer); // 傳送給藍牙模組
+                    Serial.print("\n[PC Command Sent to HM-10: ");
+                    Serial.print(pcInputBuffer);
                     Serial.println("]");
 
-                    inputBuffer = ""; // Clear buffer for next command
+                    // 如果想讓電腦輸入的指令能控制車子，可以取消下面這行的註解
+                    // command = pcInputBuffer;
+
+                    pcInputBuffer = "";
                 }
             }
             else
             {
-                inputBuffer += c; // Add character to buffer
+                pcInputBuffer += c;
             }
         }
     }
+
+    return command; // 回傳收到的藍牙指令（如果沒有則是空字串）
 }
