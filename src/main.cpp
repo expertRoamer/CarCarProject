@@ -23,6 +23,8 @@ void runPath();
 int num = 0;
 int sum[5] = {};
 
+bool BLUETOOTH_MODE = false; // 用來切換模式
+
 void setup()
 {
 	pinMode(MOTOR_PWMA, OUTPUT);
@@ -51,40 +53,68 @@ void setup()
 void loop()
 {
 	CardDectecting(mfrc522);
-	BlueTooth();
-	readIRValues();
+	String cmd = BlueTooth(); // 接收來自藍牙的指令
 
-	if (atNode)
+	if (!BLUETOOTH_MODE) // 自動模式
 	{
-		if ((getCenterIRValue() + getLeftCenterIRValue() + getRightCenterIRValue()) > 200 && getLeftIRValue() < 100 && getRightIRValue() < 100)
+		readIRValues();
+
+		if (atNode)
 		{
-			atNode = false;
-			path.remove(0, 1);
-		}
-		else if (path[0] == 'B' && startPID(150, 150, getLeftIRValue(), getLeftCenterIRValue(), getRightIRValue(), getRightCenterIRValue()))
-		{
-			atNode = false;
-			path.remove(0, 1);
+			if ((getCenterIRValue() + getLeftCenterIRValue() + getRightCenterIRValue()) > 200 && getLeftIRValue() < 100 && getRightIRValue() < 100)
+			{
+				atNode = false;
+				path.remove(0, 1);
+			}
+			else if (path[0] == 'B' && startPID(150, 150, getLeftIRValue(), getLeftCenterIRValue(), getRightIRValue(), getRightCenterIRValue()))
+			{
+				atNode = false;
+				path.remove(0, 1);
+			}
+			else
+			{
+				runPath();
+			}
 		}
 		else
 		{
-			runPath();
+			if (getLeftIRValue() > 200 && getRightIRValue() > 200)
+			{
+				atNode = true;
+			}
+			else
+			{
+				double turn = IR_PID.calculate(getWeightedAvg());
+				driveKinematic(NORMAL_SPEED, turn);
+				turnLast = turn;
+			}
+		}
+		if (cmd == "BT")
+		{
+			BLUETOOTH_MODE = true;
+			drive(0, 0);
+			Serial.println("****Switched to BLUETOOTH mode.****");
 		}
 	}
-	else
+	else // 藍牙手動模式
 	{
-		if (getLeftIRValue() > 200 && getRightIRValue() > 200)
+
+		if (cmd == "F")
+			drive(NORMAL_SPEED, NORMAL_SPEED); // 前進
+		else if (cmd == "B")
+			drive(-NORMAL_SPEED, -NORMAL_SPEED); // 後退
+		else if (cmd == "L")
+			drive(-NORMAL_SPEED, NORMAL_SPEED); // 左轉
+		else if (cmd == "R")
+			drive(NORMAL_SPEED, -NORMAL_SPEED); // 右轉
+		else if (cmd == "S")
+			drive(0, 0);
+		else if (cmd == "AUTO")
 		{
-			atNode = true;
-		}
-		else
-		{
-			double turn = IR_PID.calculate(getWeightedAvg());
-			driveKinematic(NORMAL_SPEED, turn);
-			turnLast = turn;
+			BLUETOOTH_MODE = false;
+			Serial.println("****Switched to AUTO mode.****");
 		}
 	}
-
 	delay(TIME_STEP);
 }
 

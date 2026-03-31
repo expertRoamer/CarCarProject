@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import sys
 import threading
 import time
@@ -6,7 +5,7 @@ import time
 from hm10_esp32 import HM10ESP32Bridge
 
 ###
-#Note that PORT can be different depending on your environment!!
+#注意PORT在每個人的電腦不一樣，在王宥翔電腦是COM5
 ###
 PORT = 'COM5'
 EXPECTED_NAME = 'HM10_G6'
@@ -15,29 +14,10 @@ def background_listener(bridge):
     while True:
         msg = bridge.listen()
         if msg:
-            print(f"\r[CarCar]: {msg}")
+            print(f"\r[HM10]: {msg}")
             print("You: ", end="", flush=True)
         time.sleep(0.1)
 
-def print_menu():
-    print("\n" + "="*40)
-    print("🚗 Car Control Command Menu 🚗")
-    print("="*40)
-    print("Mode Switching")
-    print("  BT   : Switch to BlueTooth mode and stop")
-    print("  AUTO : Switch to Auto mode")
-    print("\nManual Control (Type 'BT' first)")
-    print("  F    : Forward")
-    print("  B    : Backward")
-    print("  L    : Turn Left")
-    print("  R    : Turn Right")
-    print("  S    : Stop")
-    print("\nSystem Commands")
-    print("  help : Show this command menu again")
-    print("  exit : Exit and close the chat")
-    print("="*40 + "\n")
-    
-    
 def main():
     bridge = HM10ESP32Bridge(port=PORT)
 
@@ -63,29 +43,13 @@ def main():
         sys.exit(0)
 
     print(f"Ready! Connected to {EXPECTED_NAME}")
-    
-    # 啟動背景接收訊息的執行緒
     threading.Thread(target=background_listener, args=(bridge,), daemon=True).start()
-
-    # --- 顯示提示選單 ---
-    time.sleep(0.5) # 稍微等一下避免跟連線成功的訊息擠在一起
-    print_menu()
 
     try:
         while True:
             user_msg = input("You: ")
-            
-            # 檢查是否為系統指令 (忽略大小寫)
-            if user_msg.lower() in ['exit', 'quit']: 
-                break
-            elif user_msg.lower() == 'help':
-                print_menu()
-                continue # 顯示完選單後直接進入下一次迴圈，不把 help 傳給車子
-            
-            # 傳送指令給車子 (保持你輸入的大小寫，因為 Arduino 是判斷大寫)
-            if user_msg: 
-                bridge.send(user_msg)
-                
+            if user_msg.lower() in ['exit', 'quit']: break
+            if user_msg: bridge.send(user_msg)
     except (KeyboardInterrupt, EOFError):
         pass
 
