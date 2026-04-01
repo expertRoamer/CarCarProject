@@ -16,12 +16,12 @@ def background_listener(bridge):
         msg = bridge.listen()
         if msg:
             print(f"\r[CarCar]: {msg}")
-            print("You: ", end="", flush=True)
+            print("[You]: ", end="", flush=True)
         time.sleep(0.1)
 
 def print_menu():
     print("\n" + "="*40)
-    print("🚗 Car Control Command Menu 🚗")
+    print("==== Car Control Command Menu ====")
     print("="*40)
     print("Mode Switching")
     print("  BT   : Switch to BlueTooth mode and stop")
@@ -64,25 +64,23 @@ def main():
 
     print(f"Ready! Connected to {EXPECTED_NAME}")
     
-    # 啟動背景接收訊息的執行緒
+ 
     threading.Thread(target=background_listener, args=(bridge,), daemon=True).start()
 
-    # --- 顯示提示選單 ---
-    time.sleep(0.5) # 稍微等一下避免跟連線成功的訊息擠在一起
+    time.sleep(0.5) # 
     print_menu()
 
     try:
         while True:
-            user_msg = input("You: ")
+            user_msg = input("[You]: ")
             
-            # 檢查是否為系統指令 (忽略大小寫)
             if user_msg.lower() in ['exit', 'quit']: 
                 break
             elif user_msg.lower() == 'help':
                 print_menu()
-                continue # 顯示完選單後直接進入下一次迴圈，不把 help 傳給車子
+                continue 
             
-            # 傳送指令給車子 (保持你輸入的大小寫，因為 Arduino 是判斷大寫)
+            
             if user_msg: 
                 bridge.send(user_msg)
                 
