@@ -1,6 +1,8 @@
 #include "RFIDSystem.h"
 #include <Arduino.h>
 
+// 車車傳給電腦用Serial3
+// 電腦傳給車車用Serial
 void CardDectecting(MFRC522 *mfrc522)
 {
     // 1. 檢查是否有新卡片
@@ -31,11 +33,12 @@ void CardDectecting(MFRC522 *mfrc522)
     }
     uidString.toUpperCase(); // 轉成大寫方便閱讀
 
-    // 透過藍牙發送給手機/電腦
+    // 透過藍牙發送給電腦
+    Serial3.println(F("**Card Detected!**"));
     Serial3.println(uidString);
 
     // 同時在電腦序列埠監控視窗顯示，方便除錯
-    // Serial.print("Sending to Bluetooth: ");
+    Serial.print("Sending to Bluetooth: ");
     Serial.println(uidString);
     // ---------------------------------------
 

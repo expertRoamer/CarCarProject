@@ -1,7 +1,8 @@
 #include <Arduino.h>
 #include "Constants.h"
 #include "BluetoothSystem.h"
-
+// 車車傳給電腦用Serial3
+// 電腦傳給車車用Serial
 long baudRates[] = {9600, 19200, 38400, 57600, 115200, 4800, 2400, 1200, 230400};
 bool moduleReady = false;
 

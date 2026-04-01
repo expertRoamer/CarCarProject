@@ -14,7 +14,7 @@ MFRC522 *mfrc522;
 
 PIDController IR_PID(80, 0.0, 0.0);
 
-String path = "RBRBRBRB";
+String path = "RBRBRBRBRBRBRBRBRBRBRBRBRBRBRBRBRBRBRBRBRBRBRBRB";
 bool atNode = false;
 bool first = true;
 double turnLast = 0.0;
@@ -49,7 +49,8 @@ void setup()
 
 	BlueToothInit();
 }
-
+// 車車傳給電腦用Serial3
+// 電腦傳給車車用Serial
 void loop()
 {
 	CardDectecting(mfrc522);
@@ -94,25 +95,42 @@ void loop()
 			BLUETOOTH_MODE = true;
 			drive(0, 0);
 			Serial.println("****Switched to BLUETOOTH mode.****");
+			Serial3.println("****Switched to BLUETOOTH mode.****");
 		}
 	}
 	else // 藍牙手動模式
 	{
 
 		if (cmd == "F")
+		{
+			Serial3.println("---Driving Forward---");
 			drive(NORMAL_SPEED, NORMAL_SPEED); // 前進
+		}
 		else if (cmd == "B")
+		{
+			Serial3.println("---Driving Backward---");
 			drive(-NORMAL_SPEED, -NORMAL_SPEED); // 後退
+		}
 		else if (cmd == "L")
+		{
+			Serial3.println("---Driving Leftward---");
 			drive(-NORMAL_SPEED, NORMAL_SPEED); // 左轉
+		}
 		else if (cmd == "R")
+		{
+			Serial3.println("---Driving Rightward---");
 			drive(NORMAL_SPEED, -NORMAL_SPEED); // 右轉
+		}
 		else if (cmd == "S")
+		{
+			Serial3.println("---Stopping---");
 			drive(0, 0);
+		}
 		else if (cmd == "AUTO")
 		{
 			BLUETOOTH_MODE = false;
 			Serial.println("****Switched to AUTO mode.****");
+			Serial3.println("****Switched to AUTO mode.****");
 		}
 	}
 	delay(TIME_STEP);
