@@ -4,7 +4,7 @@
 #include "PinManager.h"
 #include <Arduino.h>
 
-// ª½¨«¥[ÂàÅs
+// ï¿½ï¿½ï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½s
 void driveKinematic(double speed, double turn)
 {
     double vL = speed + turn;
@@ -12,14 +12,14 @@ void driveKinematic(double speed, double turn)
     drive(vL, vR);
 }
 
-// ¥ª¥k½ü±±¨î
+// ï¿½ï¿½ï¿½kï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 void drive(double vL, double vR)
 {
     driveLeft(vL);
     driveRight(vR);
 }
 
-// ³o­Ó·|delay¡A«ØÄ³¤£­n¥Î
+// ï¿½oï¿½Ó·|delayï¿½Aï¿½ï¿½Ä³ï¿½ï¿½ï¿½nï¿½ï¿½
 void driveFor(double vL, double vR, int time)
 {
     driveLeft(vL);
@@ -40,8 +40,7 @@ void driveRight(double v)
     driveIndividual(MOTOR_PWMB, MOTOR_BIN1, MOTOR_BIN2, v);
 }
 
-void driveIndividual(int pwm, int in1, int in2, double v)
-{
+void driveIndividual(int pwm, int in1, int in2, double v) {
     if (abs(v) < 1)
     {
         digitalWrite(in1, LOW);
@@ -64,7 +63,7 @@ void back(int left_bound, int right_bound, int leftIR, int left_centerIR, int ri
     if ((leftIR + left_centerIR > left_bound) && (rightIR + right_centerIR < right_bound))
         drive(NORMAL_SPEED, NORMAL_SPEED);
     else
-        drive(-NORMAL_SPEED, NORMAL_SPEED);
+        drive(-255, 255);
 }
 
 bool startPID(int left_bound, int right_bound, int leftIR, int left_centerIR, int rightIR, int right_centerIR)

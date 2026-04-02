@@ -12,9 +12,9 @@
 
 MFRC522 *mfrc522;
 
-PIDController IR_PID(80, 0.0, 0.0);
+PIDController IR_PID(120, 0.0, 0.); // 80
 
-String path = "RBRBRBRB";
+String path = "FBRBFBLB";
 bool atNode = false;
 bool first = true;
 double turnLast = 0.0;
@@ -23,10 +23,9 @@ void runPath();
 int num = 0;
 int sum[5] = {};
 
-bool BLUETOOTH_MODE = false; // ¥Î¨Ó¤Á´«¼Ò¦¡
+bool BLUETOOTH_MODE = false; // ï¿½Î¨Ó¤ï¿½ï¿½ï¿½ï¿½Ò¦ï¿½
 
-void setup()
-{
+void setup() {
 	pinMode(MOTOR_PWMA, OUTPUT);
 	pinMode(MOTOR_AIN1, OUTPUT);
 	pinMode(MOTOR_AIN2, OUTPUT);
@@ -47,15 +46,15 @@ void setup()
 	mfrc522 = new MFRC522(SS_PIN, RST_PIN);
 	mfrc522->PCD_Init();
 
-	BlueToothInit();
+	// BlueToothInit();
 }
 
 void loop()
 {
 	CardDectecting(mfrc522);
-	String cmd = BlueTooth(); // ±µ¦¬¨Ó¦ÛÂÅ¤úªº«ü¥O
+	String cmd = BlueTooth(); // ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½Å¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½O
 
-	if (!BLUETOOTH_MODE) // ¦Û°Ê¼Ò¦¡
+	if (!BLUETOOTH_MODE) // ï¿½Û°Ê¼Ò¦ï¿½
 	{
 		readIRValues();
 
@@ -96,17 +95,17 @@ void loop()
 			Serial.println("****Switched to BLUETOOTH mode.****");
 		}
 	}
-	else // ÂÅ¤ú¤â°Ê¼Ò¦¡
+	else // ï¿½Å¤ï¿½ï¿½ï¿½Ê¼Ò¦ï¿½
 	{
 
 		if (cmd == "F")
-			drive(NORMAL_SPEED, NORMAL_SPEED); // «e¶i
+			drive(NORMAL_SPEED, NORMAL_SPEED); // ï¿½eï¿½i
 		else if (cmd == "B")
-			drive(-NORMAL_SPEED, -NORMAL_SPEED); // «á°h
+			drive(-NORMAL_SPEED, -NORMAL_SPEED); // ï¿½ï¿½h
 		else if (cmd == "L")
-			drive(-NORMAL_SPEED, NORMAL_SPEED); // ¥ªÂà
+			drive(-NORMAL_SPEED, NORMAL_SPEED); // ï¿½ï¿½ï¿½ï¿½
 		else if (cmd == "R")
-			drive(NORMAL_SPEED, -NORMAL_SPEED); // ¥kÂà
+			drive(NORMAL_SPEED, -NORMAL_SPEED); // ï¿½kï¿½ï¿½
 		else if (cmd == "S")
 			drive(0, 0);
 		else if (cmd == "AUTO")
@@ -115,6 +114,9 @@ void loop()
 			Serial.println("****Switched to AUTO mode.****");
 		}
 	}
+
+	Serial.print(", ");
+	Serial.println(getWeightedAvg());
 	delay(TIME_STEP);
 }
 
