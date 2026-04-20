@@ -5,8 +5,8 @@
 int values[5] = {0, 0, 0, 0, 0};
 double w[5] = {-3, -1, 0, 1, 3};
 
-double IR_Low[] = {40, 25, 26, 64, 30};
-double IR_High[] = {626, 566, 548, 648, 563};
+double IR_Low[] = {32, 49, 45, 68, 50};
+double IR_High[] = {548, 536, 528, 571, 615};
 
 void readIRValues() {
     values[0] = linear(analogRead(IR_LEFT), IR_Low[0], IR_High[0]);
@@ -17,13 +17,15 @@ void readIRValues() {
 }
 
 void printIRValues() {
+    String IRvalue = "[";
     for (int i = 0; i < 5; i++) {
-        Serial.print(values[i]);
+        IRvalue += String(values[i]);
         if (i < 4) {
-            Serial.print(" ");
+            IRvalue += ", ";
         }
     }
-    Serial.println();
+    IRvalue += "]";
+    Serial.println(IRvalue);
 }
 
 double getWeightedAvg() {
