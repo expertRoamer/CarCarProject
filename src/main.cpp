@@ -12,9 +12,9 @@
 
 MFRC522 *mfrc522;
 
-PIDController IR_PID(150, 0.0, 0.); // 80
+PIDController IR_PID(150, 0.0, 0.);
 
-String path = "FRBRBRB";
+String path = ""; // Start with an empty path buffer
 bool atNode = false;
 bool first = true;
 double turnLast = 0.0;
@@ -22,8 +22,6 @@ double turnLast = 0.0;
 void runPath();
 int num = 0;
 int sum[5] = {};
-
-bool BLUETOOTH_MODE = false; // ï¿½Î¨Ó¤ï¿½ï¿½ï¿½ï¿½Ò¦ï¿½
 
 void setup()
 {
@@ -42,91 +40,97 @@ void setup()
 	pinMode(IR_RIGHT, INPUT);
 
 	Serial.begin(9600);
+	Serial3.begin(9600);
 
 	SPI.begin();
 	mfrc522 = new MFRC522(SS_PIN, RST_PIN);
 	mfrc522->PCD_Init();
 
-	//BlueToothInit();
+	// BlueToothInit(); // Keep commented out unless initializing a brand new module
 }
-// ¨®¨®¶Çµ¹¹q¸£¥ÎSerial3
-// ¹q¸£¶Çµ¹¨®¨®¥ÎSerial
+
 void loop()
 {
 	CardDectecting(mfrc522);
-	String cmd = BlueTooth(); // ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½Å¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½O
-	printIRValues();
-	if (!BLUETOOTH_MODE) // ï¿½Û°Ê¼Ò¦ï¿½
-	{
-		readIRValues();
+	String cmd = BlueTooth();
 
-		if (atNode)
+	if (cmd != "")
+	{
+		if (cmd == "S")
 		{
-			if ((getCenterIRValue() + getLeftCenterIRValue() + getRightCenterIRValue()) > 200 && getLeftIRValue() < 100 && getRightIRValue() < 100)
+			drive(0, 0);
+			path = ""; // Clear buffer on emergency stop
+			Serial.println("Emergency Stop. Path cleared.");
+		}
+		else if (cmd == "F" || cmd == "B" || cmd == "L" || cmd == "R")
+		{
+			path += cmd; // Append only valid directional commands
+		}
+	}
+
+	printIRValues();
+	readIRValues();
+
+	if (atNode)
+	{
+		if (path.length() == 0)
+		{
+			drive(0, 0);
+			delay(TIME_STEP);
+			return;
+		}
+
+		// Check if intersection clear condition is met (for F, L, R)
+		if ((getCenterIRValue() + getLeftCenterIRValue() + getRightCenterIRValue()) > 200 && getLeftIRValue() < 100 && getRightIRValue() < 100)
+		{
+			atNode = false;
+			Serial3.println("STEP_DONE"); // Send ACK to Python
+			if (path.length() > 0)
 			{
-				atNode = false;
 				path.remove(0, 1);
 			}
-			else if (path[0] == 'B' && startPID(150, 150, getLeftIRValue(), getLeftCenterIRValue(), getRightIRValue(), getRightCenterIRValue()))
+		}
+		// Check if intersection clear condition is met (for Backward)
+		else if (path[0] == 'B' && startPID(150, 150, getLeftIRValue(), getLeftCenterIRValue(), getRightIRValue(), getRightCenterIRValue()))
+		{
+			atNode = false;
+			Serial3.println("STEP_DONE");
+			if (path.length() > 0)
 			{
-				atNode = false;
 				path.remove(0, 1);
-			}
-			else
-			{
-				runPath();
 			}
 		}
 		else
 		{
-			if (getLeftIRValue() > 200 && getRightIRValue() > 200)
-			{
-				atNode = true;
-			}
-			else
-			{
-				double turn = IR_PID.calculate(getWeightedAvg());
-				driveKinematic(NORMAL_SPEED, turn);
-				turnLast = turn;
-			}
-		}
-		if (cmd == "BT")
-		{
-			BLUETOOTH_MODE = true;
-			drive(0, 0);
-			Serial.println("****Switched to BLUETOOTH mode.****");
-			Serial3.println("****Switched to BLUETOOTH mode.****");
+			runPath(); // Execute current turn/forward maneuver
 		}
 	}
-	else // ï¿½Å¤ï¿½ï¿½ï¿½Ê¼Ò¦ï¿?
+	else
 	{
-		if (cmd == "F")
-			drive(NORMAL_SPEED, NORMAL_SPEED); // ï¿½eï¿½i
-		else if (cmd == "B")
-			drive(-NORMAL_SPEED, -NORMAL_SPEED); // ï¿½ï¿½h
-		else if (cmd == "L")
-			drive(-NORMAL_SPEED, NORMAL_SPEED); // ï¿½ï¿½ï¿½ï¿½
-		else if (cmd == "R")
-			drive(NORMAL_SPEED, -NORMAL_SPEED); // ï¿½kï¿½ï¿½
-		else if (cmd == "S")
+		// Detect arrival at a new node
+		if (getLeftIRValue() > 200 && getRightIRValue() > 200)
 		{
-			Serial3.println("---Stopping---");
-			drive(0, 0);
+			atNode = true;
 		}
-		else if (cmd == "AUTO")
+		else
 		{
-			BLUETOOTH_MODE = false;
-			Serial.println("****Switched to AUTO mode.****");
-			Serial3.println("****Switched to AUTO mode.****");
+			// Normal line tracking
+			double turn = IR_PID.calculate(getWeightedAvg());
+			driveKinematic(NORMAL_SPEED, turn);
+			turnLast = turn;
 		}
 	}
+
 	delay(TIME_STEP);
 }
 
 void runPath()
 {
+	if (path.length() == 0)
+		return; // Extra safety guard
+
 	char command = path.charAt(0);
-	// Serial.println(command);
+
 	if (command == 'F')
 	{
 		driveKinematic(NORMAL_SPEED, 0);
