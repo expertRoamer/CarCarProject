@@ -12,9 +12,9 @@
 
 MFRC522 *mfrc522;
 
-PIDController IR_PID(150, 0.0, 0.);
+PIDController IR_PID(20, 0.0, 0.); // 80
 
-String path = ""; // Start with an empty path buffer
+String path = "LBLBLBLB";
 bool atNode = false;
 bool first = true;
 double turnLast = 0.0;
@@ -51,6 +51,7 @@ void setup()
 
 void loop()
 {
+
 	CardDectecting(mfrc522);
 	String cmd = BlueTooth();
 
@@ -99,28 +100,49 @@ void loop()
 			{
 				path.remove(0, 1);
 			}
+			else
+			{
+				runPath();
+			}
 		}
 		else
 		{
-			runPath(); // Execute current turn/forward maneuver
+			if (getLeftIRValue() > 200 && getRightIRValue() > 200)
+			{
+				atNode = true;
+			}
+			else
+			{
+				double turn = IR_PID.calculate(getWeightedAvg());
+				driveKinematic((path[0] == 'F') ? NORMAL_SPEED : NORMAL_SPEED * 0.7, turn);
+				turnLast = turn;
+			}
+		}
+		if (cmd == "BT")
+		{
+			BLUETOOTH_MODE = true;
+			drive(0, 0);
+			Serial.println("****Switched to BLUETOOTH mode.****");
 		}
 	}
-	else
+	else // �Ť���ʼҦ�?
 	{
-		// Detect arrival at a new node
-		if (getLeftIRValue() > 200 && getRightIRValue() > 200)
+		if (cmd == "F")
+			drive(NORMAL_SPEED, NORMAL_SPEED); // �e�i
+		else if (cmd == "B")
+			drive(-NORMAL_SPEED, -NORMAL_SPEED); // ��h
+		else if (cmd == "L")
+			drive(-NORMAL_SPEED, NORMAL_SPEED); // ����
+		else if (cmd == "R")
+			drive(NORMAL_SPEED, -NORMAL_SPEED); // �k��
+		else if (cmd == "S")
+			drive(0, 0);
+		else if (cmd == "AUTO")
 		{
-			atNode = true;
-		}
-		else
-		{
-			// Normal line tracking
-			double turn = IR_PID.calculate(getWeightedAvg());
-			driveKinematic(NORMAL_SPEED, turn);
-			turnLast = turn;
+			BLUETOOTH_MODE = false;
+			Serial.println("****Switched to AUTO mode.****");
 		}
 	}
-
 	delay(TIME_STEP);
 }
 
@@ -137,11 +159,11 @@ void runPath()
 	}
 	else if (command == 'L')
 	{
-		drive(-50, 255);
+		drive(-25, 200);
 	}
 	else if (command == 'R')
 	{
-		drive(255, -50);
+		drive(200, -25);
 	}
 	else if (command == 'B')
 	{

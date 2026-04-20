@@ -5,8 +5,8 @@
 int values[5] = {0, 0, 0, 0, 0};
 double w[5] = {-3, -1, 0, 1, 3};
 
-double IR_Low[] = {32, 49, 45, 68, 50};
-double IR_High[] = {548, 536, 528, 571, 615};
+double IR_Low[] = {61, 24, 34, 57, 31};
+double IR_High[] = {442, 382, 397, 487, 330};
 
 void readIRValues() {
     values[0] = linear(analogRead(IR_LEFT), IR_Low[0], IR_High[0]);

@@ -4,7 +4,9 @@
 #include "PinManager.h"
 #include <Arduino.h>
 
-// �����[���s
+double currentLeftSpeed = 0;
+double currentRightSpeed = 0;
+
 void driveKinematic(double speed, double turn)
 {
     double vL = speed + turn;
@@ -15,8 +17,10 @@ void driveKinematic(double speed, double turn)
 // ���k������
 void drive(double vL, double vR)
 {
-    driveLeft(vL);
-    driveRight(vR);
+    driveLeft(currentLeftSpeed + min(vL - currentLeftSpeed, 10));
+    driveRight(currentRightSpeed + min(vR - currentRightSpeed, 10));
+    currentLeftSpeed += min(vR - currentLeftSpeed, 10);
+    currentRightSpeed += min(vR - currentRightSpeed, 10);
 }
 
 // �o�ӷ|delay�A��ĳ���n��
@@ -63,10 +67,11 @@ void back(int left_bound, int right_bound, int leftIR, int left_centerIR, int ri
     if ((leftIR + left_centerIR > left_bound) && (rightIR + right_centerIR < right_bound))
         drive(NORMAL_SPEED, NORMAL_SPEED);
     else
-        drive(-255, 255);
+        drive(-70, 70);
 }
 
 bool startPID(int left_bound, int right_bound, int leftIR, int left_centerIR, int rightIR, int right_centerIR)
 {
     return ((leftIR + left_centerIR > left_bound) && (rightIR + right_centerIR < right_bound));
 }
+
