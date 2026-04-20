@@ -8,7 +8,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 file_path = os.path.join(current_dir, "calibration_data.txt")
 
 # 設定 Serial
-COM_PORT = 'COM7'
+COM_PORT = 'COM9'
 BAUD_RATE = 9600
 
 # 用來暫存數據的字典

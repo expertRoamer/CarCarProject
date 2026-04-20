@@ -25,4 +25,7 @@ void getAverage(int[]);
 int linear(int, double, double);
 
 void correction();
+
+void printRawValues();
+
 #endif // IRSENSOR_SYSTEM_H
