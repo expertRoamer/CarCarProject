@@ -1,7 +1,6 @@
 #ifndef MOTORSYSTEM_H
 #define MOTORSYSTEM_H
 
-
 void driveKinematic(double speed, double turn);
 
 void drive(double, double);

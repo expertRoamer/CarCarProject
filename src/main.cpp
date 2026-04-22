@@ -12,10 +12,9 @@
 
 MFRC522 *mfrc522;
 
-PIDController IR_PID(20, 0.0, 0.0); // 80
+PIDController IR_PID(150, 0.0, 0.); // 80
 
-// String path = "LBLBLBLB";
-String path = "";
+String path = "FRBRBRB";
 bool atNode = false;
 bool first = true;
 double turnLast = 0.0;
@@ -52,7 +51,6 @@ void setup()
 
 void loop()
 {
-
 	CardDectecting(mfrc522);
 	String cmd = BlueTooth();
 
@@ -115,7 +113,7 @@ void loop()
 			else
 			{
 				double turn = IR_PID.calculate(getWeightedAvg());
-				driveKinematic((path[0] == 'F') ? NORMAL_SPEED : NORMAL_SPEED * 0.7, turn);
+				driveKinematic(NORMAL_SPEED, turn);
 				turnLast = turn;
 			}
 		}
@@ -160,11 +158,11 @@ void runPath()
 	}
 	else if (command == 'L')
 	{
-		drive(-25, 200);
+		drive(-50, 255);
 	}
 	else if (command == 'R')
 	{
-		drive(200, -25);
+		drive(255, -50);
 	}
 	else if (command == 'B')
 	{
