@@ -12,9 +12,10 @@
 
 MFRC522 *mfrc522;
 
-PIDController IR_PID(20, 0.0, 0.); // 80
+PIDController IR_PID(20, 0.0, 0.0); // 80
 
-String path = "LBLBLBLB";
+// String path = "LBLBLBLB";
+String path = "";
 bool atNode = false;
 bool first = true;
 double turnLast = 0.0;

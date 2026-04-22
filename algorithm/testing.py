@@ -1,142 +1,205 @@
 import csv
 import heapq
 
-# 定義絕對方向的數字映射 (順時針)
+# Directions Mapping (Clockwise)
 DIR_MAP = {'N': 0, 'E': 1, 'S': 2, 'W': 3}
-# 相對方向的文字映射
-REL_MAP = {0: 'f', 1: 'r', 2: 'b', 3: 'l'}
-# 座標移動偏移量 (用來計算曼哈頓距離)
+REL_MAP = {0: 'F', 1: 'R', 2: 'B', 3: 'L'}
 MOVE_OFFSET = {0: (0, 1), 1: (1, 0), 2: (0, -1), 3: (-1, 0)}
 
-def analyze_best_target(csv_filepath, start_idx, start_facing='N', cost_weights=None):
+def get_absolute_direction(graph, coords, u, v):
     """
-    計算從起點出發，前往哪個死路的「單位時間得分」最高。
+    Helper to find the absolute direction from node u to node v.
+    Includes a geometric fallback to prevent KeyError: None if CSV is malformed.
     """
-    if cost_weights is None:
-        # 預設轉向時間成本 (可由外部動態傳入調整)
-        cost_weights = {'f': 1.0, 'l': 1.5, 'r': 1.5, 'b': 3.0}
+    # Strategy 1: Find direction using the adjacency graph
+    if u in graph:
+        for d_str, nxt in graph[u].items():
+            if nxt == v:
+                return d_str
+            
+    # Strategy 2: Fallback to physical (X, Y) coordinates if connection is abnormal
+    if coords and u in coords and v in coords:
+        dx = coords[v][0] - coords[u][0]
+        dy = coords[v][1] - coords[u][1]
+        if dx > 0: return 'E'
+        if dx < 0: return 'W'
+        if dy > 0: return 'N'
+        if dy < 0: return 'S'
 
-    # 1. 讀取地圖
+    # Strategy 3: Ultimate fail-safe to prevent system crash
+    print(f"[WARNING] Cannot determine direction from {u} to {v}. Defaulting to 'N'.")
+    return 'N'
+
+def build_map_data(csv_filepath, origin_idx):
+    """Parses the CSV, builds the graph, assigns coordinates, and calculates fixed scores."""
     graph = {}
     with open(csv_filepath, 'r', encoding='utf-8') as file:
         reader = csv.DictReader(file)
         for row in reader:
             idx = int(row['index'])
             neighbors = {}
-            if row.get('North'): neighbors['N'] = int(row['North'])
-            if row.get('South'): neighbors['S'] = int(row['South'])
-            if row.get('West'):  neighbors['W'] = int(row['West'])
-            if row.get('East'):  neighbors['E'] = int(row['East'])
+            for d in ['North', 'South', 'West', 'East']:
+                val = row.get(d)
+                if val and val.strip() and float(val) > 0:
+                    neighbors[d[0]] = int(float(val))
             graph[idx] = neighbors
 
-    # 2. BFS 探索地圖，賦予所有節點 (X, Y) 座標
-    coords = {start_idx: (0, 0)}
-    queue = [start_idx]
-    visited_map = {start_idx}
+    coords = {origin_idx: (0, 0)}
+    queue = [origin_idx]
+    visited_coords = {origin_idx}
     
     while queue:
         curr = queue.pop(0)
         for d_str, nxt in graph[curr].items():
-            if nxt not in visited_map:
-                visited_map.add(nxt)
+            if nxt not in visited_coords:
+                visited_coords.add(nxt)
                 dx, dy = MOVE_OFFSET[DIR_MAP[d_str]]
                 coords[nxt] = (coords[curr][0] + dx, coords[curr][1] + dy)
                 queue.append(nxt)
 
-    # 3. 找出所有死路 (Dead Ends) 並計算分數
+    # Scores are FIXED based on Manhattan distance to the ORIGINAL starting point
     dead_ends = {}
     for node, edges in graph.items():
-        if len(edges) == 1 and node != start_idx:
-            # 計算曼哈頓距離 * 10
-            dx = abs(coords[node][0] - coords[start_idx][0])
-            dy = abs(coords[node][1] - coords[start_idx][1])
+        if len(edges) == 1 and node != origin_idx:
+            dx = abs(coords[node][0] - coords[origin_idx][0])
+            dy = abs(coords[node][1] - coords[origin_idx][1])
             dead_ends[node] = (dx + dy) * 10
 
-    # 4. 使用 Dijkstra 演算法尋找最佳路徑 (考慮轉向成本)
-    # 優先權佇列存放: (累積成本, 當前節點, 當前面向, 路徑歷史, 指令歷史)
-    start_dir = DIR_MAP[start_facing]
-    pq = [(0.0, start_idx, start_dir, [start_idx], "")]
-    
-    # 記錄到達 (節點, 面向) 的最低成本，避免無效繞圈
+    # Returns coords as well for the fail-safe mechanism
+    return graph, dead_ends, coords
+
+def find_best_next_target(graph, current_node, current_facing, unvisited_targets, weights):
+    """Runs Dijkstra to find the most efficient NEXT target from the current state."""
+    start_dir = DIR_MAP[current_facing]
+    pq = [(0.0, current_node, start_dir, [current_node], "")]
     min_cost_state = {}
-    
-    best_paths_to_targets = {}
+    best_results = {}
 
     while pq:
-        cost, curr_node, curr_dir, path_history, cmd_history = heapq.heappop(pq)
+        cost, curr, curr_dir, path_hist, cmd_hist = heapq.heappop(pq)
 
-        state = (curr_node, curr_dir)
+        state = (curr, curr_dir)
         if state in min_cost_state and min_cost_state[state] <= cost:
             continue
         min_cost_state[state] = cost
 
-        # 如果抵達某個死路，記錄下來
-        if curr_node in dead_ends:
-            if curr_node not in best_paths_to_targets or cost < best_paths_to_targets[curr_node]['cost']:
-                best_paths_to_targets[curr_node] = {
+        if curr in unvisited_targets:
+            if curr not in best_results or cost < best_results[curr]['cost']:
+                best_results[curr] = {
                     'cost': cost,
-                    'path': path_history,
-                    'commands': cmd_history
+                    'commands': cmd_hist,
+                    'path': path_hist
                 }
 
-        # 探索相鄰節點
-        for next_d_str, next_node in graph[curr_node].items():
+        for next_d_str, nxt in graph[curr].items():
             next_abs_dir = DIR_MAP[next_d_str]
-            
-            # 計算轉向: 0(直走), 1(右轉), 2(迴轉), 3(左轉)
             turn_val = (next_abs_dir - curr_dir) % 4
             rel_cmd = REL_MAP[turn_val]
             
-            # 計算這一步的成本 (轉向成本)
-            step_cost = cost_weights[rel_cmd]
-            new_cost = cost + step_cost
-            
-            heapq.heappush(pq, (new_cost, next_node, next_abs_dir, path_history + [next_node], cmd_history + rel_cmd))
+            new_cost = cost + weights[rel_cmd]
+            heapq.heappush(pq, (new_cost, nxt, next_abs_dir, path_hist + [nxt], cmd_hist + rel_cmd))
 
-    # 5. 計算 Efficiency 並排序排行榜
-    results = []
-    for target, score in dead_ends.items():
-        if target in best_paths_to_targets:
-            data = best_paths_to_targets[target]
-            total_cost = data['cost']
-            eff = score / total_cost if total_cost > 0 else 0
-            
-            results.append({
-                'target': target,
-                'score': score,
-                'cost': total_cost,
-                'efficiency': round(eff, 3),
-                'commands': data['commands']
-            })
+    # Evaluate Efficiency: Fixed Target Score / Travel Cost from current position
+    best_target = None
+    best_efficiency = -1
+    best_data = None
 
-    # 依照效率 (單位時間得分) 由高到低排序
-    results.sort(key=lambda x: x['efficiency'], reverse=True)
-    return results
-
-# ==========================================
-# 測試區塊
-# ==========================================
-if __name__ == "__main__":
-    # 你可以隨時在這裡動態調整轉彎的代價！
-    my_car_weights = {
-        'f': 1.0,  # 直走最快，基準為 1
-        'r': 1.8,  # 右轉稍慢
-        'l': 1.8,  # 左轉稍慢
-        'b': 3.5   # 迴轉非常花時間
-    }
-    
-    # 假設從節點 28 出發，車頭一開始朝向北邊 ('N')
-    START_NODE = 28
-    START_FACING = 'N' 
-    
-    print(f"正在計算從節點 {START_NODE} 出發的最佳決策...\n")
-    results = analyze_best_target('sample_maze.csv', START_NODE, START_FACING, my_car_weights)
-    
-    for rank, res in enumerate(results):
-        print(f"第 {rank+1} 名: 前往死路節點 {res['target']}")
-        print(f"  - 預計得分: {res['score']}")
-        print(f"  - 時間成本: {res['cost']}")
-        print(f"  - 獲利效率: {res['efficiency']} (分/單位時間)")
-        print(f"  - 執行指令: {res['commands']}\n")
+    for target, data in best_results.items():
+        score = unvisited_targets[target]
+        eff = score / data['cost'] if data['cost'] > 0 else 0
         
-    print(f"系統建議: 直接將指令 '{results[0]['commands']}' 傳送給車子！")
+        if eff > best_efficiency:
+            best_efficiency = eff
+            best_target = target
+            best_data = data
+
+    return best_target, best_data, best_efficiency
+
+def generate_continuous_mission(csv_filepath, start_idx, start_facing, weights=None):
+    """Generates a continuous sequence of commands to harvest points greedily."""
+    if weights is None:
+        weights = {'F': 1.0, 'L': 1.5, 'R': 1.5, 'B': 3.0}
+
+    # Fetch graph, targets, and coordinates
+    graph, unvisited_targets, coords = build_map_data(csv_filepath, start_idx)
+    
+    current_node = start_idx
+    current_facing = start_facing
+    
+    total_score = 0
+    total_cost = 0
+    master_commands = ""
+
+    print("="*60)
+    print("INITIALIZING CONTINUOUS MISSION")
+    print(f"Origin: {start_idx} | Facing: {start_facing}")
+    print("="*60)
+
+    step = 1
+    while unvisited_targets:
+        target, data, eff = find_best_next_target(graph, current_node, current_facing, unvisited_targets, weights)
+        
+        if not target:
+            print("No more reachable targets.")
+            break
+            
+        path = data['path']
+        cmds = data['commands']
+        cost = data['cost']
+        score = unvisited_targets[target]
+        
+        # Determine the facing direction upon arriving at the target
+        if len(path) > 1:
+            current_facing = get_absolute_direction(graph, coords, path[-2], path[-1])
+        
+        # Final safety lock
+        if current_facing is None:
+            current_facing = 'N' 
+        
+        # Update metrics
+        total_score += score
+        total_cost += cost
+        master_commands += cmds
+        
+        print(f"Phase {step}: Harvest Node {target}")
+        print(f"  Earned    : {score} Points")
+        print(f"  Cost      : {cost} units")
+        print(f"  Path      : {' -> '.join(map(str, path))}")
+        print(f"  Commands  : {cmds}")
+        print(f"  New State : At Node {target}, Facing {current_facing}")
+        print("-" * 60)
+        
+        # Remove harvested target from the list
+        del unvisited_targets[target]
+        current_node = target
+        step += 1
+
+    print("="*60)
+    print("MISSION PLANNING COMPLETE")
+    print(f"Total Expected Score : {total_score}")
+    print(f"Total Time Cost      : {total_cost}")
+    print(f"Master Command String: {master_commands}")
+    print("="*60)
+    
+    return master_commands
+
+# --- Main Execution ---
+if __name__ == "__main__":
+    START_FACING = 'S'
+    # For Medium Maze
+    # FILE_NAME = "medium_maze.csv" 
+    # START_NODE = 1
+
+    #For Big Maze
+    FILE_NAME = "big_maze_114.csv"
+    START_NODE = 25
+    # Customize Weights 
+    CAR_WEIGHTS = {'F': 1.0, 'L': 1.5, 'R': 1.5, 'B': 3.0}
+
+    try:
+        final_command_sequence = generate_continuous_mission(FILE_NAME, START_NODE, START_FACING, CAR_WEIGHTS)
+        
+    except FileNotFoundError:
+        print(f"[ERROR] {FILE_NAME} not found. Please check the file path.")
+    except Exception as e:
+        print(f"[ERROR] An unexpected error occurred: {e}")
