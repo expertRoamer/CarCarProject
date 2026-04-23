@@ -2,6 +2,7 @@
 #define IRSENSOR_SYSTEM_H
 
 
+void printRawValues();
 
 
 void readIRValues();

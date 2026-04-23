@@ -19,7 +19,7 @@ bool waitForResponse(const char *expected, unsigned long timeout)
 }
 void sendATCommand(const char *command)
 {
-    Serial3.print(command);
+    Serial3.println(command);
     waitForResponse("", 1000);
 }
 
@@ -42,7 +42,7 @@ void BlueToothInit()
 
         // 2. Force Disconnection
         // Sending "AT" while connected forces the module to disconnect [2].
-        Serial3.print("AT");
+        Serial3.println("AT");
 
         if (waitForResponse("OK", 800))
         {
@@ -98,9 +98,9 @@ String BlueTooth()
     if (Serial3.available())
     {
         command = Serial3.readString();
-        command.trim(); // ¡i­«­n¡j¥h°£±¼ \r ©Î \n¡A§_«h if ("F") ·|§PÂ_¥¢±Ñ
+        command.trim(); // ï¿½iï¿½ï¿½ï¿½nï¿½jï¿½hï¿½ï¿½ï¿½ï¿½ \r ï¿½ï¿½ \nï¿½Aï¿½_ï¿½h if ("F") ï¿½|ï¿½Pï¿½_ï¿½ï¿½ï¿½ï¿½
 
-        // °»¿ù¥Î¡G¦b¹q¸£¿Ã¹õ¬Ý¨ì¦¬¨ì¤F¤°»ò
+        // ï¿½ï¿½ï¿½ï¿½ï¿½Î¡Gï¿½bï¿½qï¿½ï¿½ï¿½Ã¹ï¿½ï¿½Ý¨ì¦¬ï¿½ï¿½Fï¿½ï¿½ï¿½ï¿½
         Serial.print("Bluetooth Received: [");
         Serial.print(command);
         Serial.println("]");
@@ -117,12 +117,12 @@ String BlueTooth()
             {
                 if (pcInputBuffer.length() > 0)
                 {
-                    Serial3.print(pcInputBuffer); // ¶Ç°eµ¹ÂÅ¤ú¼Ò²Õ
+                    Serial3.println(pcInputBuffer); // ï¿½Ç°eï¿½ï¿½ï¿½Å¤ï¿½ï¿½Ò²ï¿½
                     Serial.print("\n[PC Command Sent to HM-10: ");
                     Serial.print(pcInputBuffer);
                     Serial.println("]");
 
-                    // ¦pªG·QÅý¹q¸£¿é¤Jªº«ü¥O¯à±±¨î¨®¤l¡A¥i¥H¨ú®ø¤U­±³o¦æªºµù¸Ñ
+                    // ï¿½pï¿½Gï¿½Qï¿½ï¿½ï¿½qï¿½ï¿½ï¿½ï¿½Jï¿½ï¿½ï¿½ï¿½ï¿½Oï¿½à±±ï¿½î¨®ï¿½lï¿½Aï¿½iï¿½Hï¿½ï¿½ï¿½ï¿½ï¿½Uï¿½ï¿½ï¿½oï¿½æªºï¿½ï¿½ï¿½ï¿½
                     // command = pcInputBuffer;
 
                     pcInputBuffer = "";
@@ -135,5 +135,5 @@ String BlueTooth()
         }
     }
 
-    return command; // ¦^¶Ç¦¬¨ìªºÂÅ¤ú«ü¥O¡]¦pªG¨S¦³«h¬OªÅ¦r¦ê¡^
+    return command; // ï¿½^ï¿½Ç¦ï¿½ï¿½ìªºï¿½Å¤ï¿½ï¿½ï¿½ï¿½Oï¿½]ï¿½pï¿½Gï¿½Sï¿½ï¿½ï¿½hï¿½Oï¿½Å¦rï¿½ï¿½^
 }

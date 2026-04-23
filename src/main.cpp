@@ -12,9 +12,9 @@
 
 MFRC522 *mfrc522;
 
-PIDController IR_PID(20, 0.0, 0.); // 80
+PIDController IR_PID(45, 0, 40); // 80
 
-String path = "LBLBLBLB";
+String path = "BBBBBBBB";
 bool atNode = false;
 bool first = true;
 double turnLast = 0.0;
@@ -25,8 +25,7 @@ int sum[5] = {};
 
 bool BLUETOOTH_MODE = false; // �ΨӤ����Ҧ�
 
-void setup()
-{
+void setup() {
 	pinMode(MOTOR_PWMA, OUTPUT);
 	pinMode(MOTOR_AIN1, OUTPUT);
 	pinMode(MOTOR_AIN2, OUTPUT);
@@ -41,33 +40,38 @@ void setup()
 	pinMode(IR_RIGHT_CENTER, INPUT);
 	pinMode(IR_RIGHT, INPUT);
 
+	// BlueToothInit();
+
 	Serial.begin(9600);
+	Serial3.begin(9600);
 
 	SPI.begin();
 	mfrc522 = new MFRC522(SS_PIN, RST_PIN);
 	mfrc522->PCD_Init();
-
-	//BlueToothInit();
 }
 
-void loop()
-{
-
+void loop() {
 	CardDectecting(mfrc522);
+	// String cmd = ""; // �����Ӧ��Ť������O
 	String cmd = BlueTooth(); // �����Ӧ��Ť������O
 	printIRValues();
 	if (!BLUETOOTH_MODE) // �۰ʼҦ�
 	{
 		readIRValues();
 
+		Serial.print(", ");
+		Serial.print(atNode);
+		Serial.print(", ");
+		Serial.print(getWeightedAvg());
+		Serial.print(", ");
 		if (atNode)
 		{
-			if ((getCenterIRValue() + getLeftCenterIRValue() + getRightCenterIRValue()) > 200 && getLeftIRValue() < 100 && getRightIRValue() < 100)
+			if (path[0] != 'B' && (getCenterIRValue() + getLeftCenterIRValue() + getRightCenterIRValue()) > 200 && getLeftIRValue() < 100 && getRightIRValue() < 100)
 			{
 				atNode = false;
 				path.remove(0, 1);
 			}
-			else if (path[0] == 'B' && startPID(150, 150, getLeftIRValue(), getLeftCenterIRValue(), getRightIRValue(), getRightCenterIRValue()))
+			else if (path[0] == 'B' && startPID(250, 250, getLeftIRValue(), getLeftCenterIRValue(), getRightIRValue(), getRightCenterIRValue(), getWeightedAvg()))
 			{
 				atNode = false;
 				path.remove(0, 1);
@@ -85,8 +89,8 @@ void loop()
 			}
 			else
 			{
-				double turn = IR_PID.calculate(getWeightedAvg());
-				driveKinematic((path[0] == 'F') ? NORMAL_SPEED : NORMAL_SPEED * 0.7, turn);
+				double turn = IR_PID.calculate(0.0, getWeightedAvg());
+				driveKinematic(NORMAL_SPEED, -turn);
 				turnLast = turn;
 			}
 		}
@@ -115,6 +119,8 @@ void loop()
 			Serial.println("****Switched to AUTO mode.****");
 		}
 	}
+
+	Serial.println(turnLast);
 	delay(TIME_STEP);
 }
 
@@ -128,7 +134,7 @@ void runPath()
 	}
 	else if (command == 'L')
 	{
-		drive(-25, 200);
+		drive(-40, 150);
 	}
 	else if (command == 'R')
 	{

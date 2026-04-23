@@ -5,8 +5,8 @@
 int values[5] = {0, 0, 0, 0, 0};
 double w[5] = {-3, -1, 0, 1, 3};
 
-double IR_Low[] = {61, 24, 34, 57, 31};
-double IR_High[] = {442, 382, 397, 487, 330};
+double IR_Low[] = {47, 27, 28, 47, 29};
+double IR_High[] = {240, 260, 200, 320, 300};
 
 void readIRValues() {
     values[0] = linear(analogRead(IR_LEFT), IR_Low[0], IR_High[0]);
@@ -16,16 +16,41 @@ void readIRValues() {
     values[4] = linear(analogRead(IR_RIGHT), IR_Low[4], IR_High[4]);
 }
 
+void printRawValues() {
+    Serial.print("[");
+    Serial.print(analogRead(IR_LEFT));
+    Serial.print(", ");
+    Serial.print(analogRead(IR_LEFT_CENTER));
+    Serial.print(", ");
+    Serial.print(analogRead(IR_CENTER));
+    Serial.print(", ");
+    Serial.print(analogRead(IR_RIGHT_CENTER));
+    Serial.print(", ");
+    Serial.print(analogRead(IR_RIGHT));
+    Serial.println("]");
+}
+
 void printIRValues() {
-    String IRvalue = "[";
+    String IRvalue = "";
     for (int i = 0; i < 5; i++) {
         IRvalue += String(values[i]);
         if (i < 4) {
             IRvalue += ", ";
         }
     }
-    IRvalue += "]";
-    Serial.println(IRvalue);
+    IRvalue += "";
+    Serial.print(IRvalue);
+}
+void printIRValuesBT() {
+    String IRvalue = "";
+    for (int i = 0; i < 5; i++) {
+        IRvalue += String(values[i]);
+        if (i < 4) {
+            IRvalue += ", ";
+        }
+    }
+    IRvalue += "";
+    Serial3.println(IRvalue);
 }
 
 double getWeightedAvg() {

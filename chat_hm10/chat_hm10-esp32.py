@@ -8,7 +8,8 @@ from hm10_esp32 import HM10ESP32Bridge
 ###
 #Note that PORT can be different depending on your environment!!
 ###
-PORT = 'COM5'
+PORT = 'COM7'
+# PORT = 'COM5'
 EXPECTED_NAME = 'HM10_G6'
 
 def background_listener(bridge):
