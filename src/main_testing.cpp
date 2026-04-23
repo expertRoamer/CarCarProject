@@ -51,7 +51,7 @@ void setup()
 	mfrc522 = new MFRC522(SS_PIN, RST_PIN);
 	mfrc522->PCD_Init();
 
-	// BlueToothInit(); // Keep Commented out Unless Initializing A Brand New Module
+	BlueToothInit(); // Keep Commented out Unless Initializing A Brand New Module
 	while (path.length() < 3)
 	{
 		String cmd = BlueTooth();

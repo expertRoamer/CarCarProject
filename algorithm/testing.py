@@ -185,14 +185,16 @@ def generate_continuous_mission(csv_filepath, start_idx, start_facing, weights=N
 
 # --- Main Execution ---
 if __name__ == "__main__":
-    START_FACING = 'S'
     # For Medium Maze
-    # FILE_NAME = "medium_maze.csv" 
-    # START_NODE = 1
+    FILE_NAME = "medium_maze.csv" 
+    START_FACING = 'N'
+    START_NODE = 1
 
     #For Big Maze
-    FILE_NAME = "big_maze_114.csv"
-    START_NODE = 25
+    # FILE_NAME = "big_maze_114.csv"
+    # START_NODE = 25
+    # START_FACING = 'S'
+
     # Customize Weights 
     CAR_WEIGHTS = {'F': 1.0, 'L': 1.5, 'R': 1.5, 'B': 3.0}
 
