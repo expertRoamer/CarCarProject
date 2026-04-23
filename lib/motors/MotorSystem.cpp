@@ -20,14 +20,14 @@ void drive(double vL, double vR)
 }
 
 // �o�ӷ|delay�A��ĳ���n��
-void driveFor(double vL, double vR, int time)
-{
-    driveLeft(vL);
-    driveRight(vR);
-    delay(time);
-    driveLeft(0);
-    driveRight(0);
-}
+// void driveFor(double vL, double vR, int time)
+// {
+//     driveLeft(vL);
+//     driveRight(vR);
+//     delay(time);
+//     driveLeft(0);
+//     driveRight(0);
+// }
 
 void driveLeft(double v)
 {
@@ -40,7 +40,8 @@ void driveRight(double v)
     driveIndividual(MOTOR_PWMB, MOTOR_BIN1, MOTOR_BIN2, v);
 }
 
-void driveIndividual(int pwm, int in1, int in2, double v) {
+void driveIndividual(int pwm, int in1, int in2, double v)
+{
     if (abs(v) < 1)
     {
         digitalWrite(in1, LOW);
