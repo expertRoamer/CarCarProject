@@ -2,6 +2,8 @@
 #include "Constants.h"
 #include "BluetoothSystem.h"
 
+// ESP32 to PC uses Serial3
+// PC to ESP32 uses Serial
 long baudRates[] = {9600, 19200, 38400, 57600, 115200, 4800, 2400, 1200, 230400};
 bool moduleReady = false;
 
@@ -17,9 +19,10 @@ bool waitForResponse(const char *expected, unsigned long timeout)
     }
     return (response.indexOf(expected) != -1);
 }
+
 void sendATCommand(const char *command)
 {
-    Serial3.println(command);
+    Serial3.print(command);
     waitForResponse("", 1000);
 }
 
@@ -41,8 +44,8 @@ void BlueToothInit()
         delay(100);
 
         // 2. Force Disconnection
-        // Sending "AT" while connected forces the module to disconnect [2].
-        Serial3.println("AT");
+        // Sending "AT" while connected forces the module to disconnect.
+        Serial3.print("AT");
 
         if (waitForResponse("OK", 800))
         {
@@ -65,18 +68,18 @@ void BlueToothInit()
 
     // 3. Restore Factory Defaults
     Serial.println("Restoring factory defaults...");
-    sendATCommand("AT+RENEW"); // Restores all setup values
+    sendATCommand("AT+RENEW");
     delay(500);
 
     // 4. Set Custom Name via Macro
     Serial.print("Setting name to: ");
     Serial.println(CARCAR_NAME);
     String nameCmd = "AT+NAME" + String(CARCAR_NAME);
-    sendATCommand(nameCmd.c_str()); // Max length is 12
+    sendATCommand(nameCmd.c_str());
 
     // 5. Enable Connection Notifications
     Serial.println("Enabling notifications...");
-    sendATCommand("AT+NOTI1"); // Notify when link is established/lost
+    sendATCommand("AT+NOTI1");
 
     // 6. Get the Bluetooth MAC Address
     Serial.println("Querying Bluetooth Address");
@@ -84,29 +87,30 @@ void BlueToothInit()
 
     // 7. Restart the module to apply changes
     Serial.println("Restarting module...");
-    sendATCommand("AT+RESET"); // Restart the module
+    sendATCommand("AT+RESET");
     delay(1000);
-    Serial3.begin(9600); // Now the module would use baudrate 9600
+    Serial3.begin(9600); // Now the module uses baudrate 9600
 
     Serial.println("Initialization Complete.");
 }
+
 String BlueTooth()
 {
     String command = "";
 
-    // 1. CarCar to PC: Forward HM-10 responses to the Serial Monitor
+    // 1. ESP32 to PC: Forward HM-10 responses to the Serial Monitor
     if (Serial3.available())
     {
         command = Serial3.readString();
-        command.trim(); // �i���n�j�h���� \r �� \n�A�_�h if ("F") �|�P�_����
+        command.trim(); // IMPORTANT: Remove \r or \n, otherwise exact string matching will fail
 
-        // �����ΡG�b�q���ù��ݨ즬��F����
+        // Debug: See what was received on the Serial Monitor
         Serial.print("Bluetooth Received: [");
         Serial.print(command);
         Serial.println("]");
     }
 
-    // 2. PC to CarCar: Read user input and truncate line endings
+    // 2. PC to ESP32: Read user input and truncate line endings
     if (Serial.available())
     {
         static String pcInputBuffer = "";
@@ -117,13 +121,10 @@ String BlueTooth()
             {
                 if (pcInputBuffer.length() > 0)
                 {
-                    Serial3.println(pcInputBuffer); // �ǰe���Ť��Ҳ�
+                    Serial3.print(pcInputBuffer); // Send to Bluetooth module
                     Serial.print("\n[PC Command Sent to HM-10: ");
                     Serial.print(pcInputBuffer);
                     Serial.println("]");
-
-                    // �p�G�Q���q����J�����O�౱��l�A�i�H�����U���o�檺����
-                    // command = pcInputBuffer;
 
                     pcInputBuffer = "";
                 }
@@ -135,5 +136,5 @@ String BlueTooth()
         }
     }
 
-    return command; // �^�Ǧ��쪺�Ť����O�]�p�G�S���h�O�Ŧr��^
+    return command; // Return the received Bluetooth command (or empty string if none)
 }
