@@ -52,14 +52,18 @@ void setup()
 	mfrc522->PCD_Init();
 
 	// BlueToothInit(); // Keep Commented out Unless Initializing A Brand New Module
-	while (path.length() < 3) // Take in three steps first
+	while (path.length() < 3)
 	{
 		String cmd = BlueTooth();
-		if (cmd == "F" || cmd == "B" || cmd == "L" || cmd == "R")
+		for (int i = 0; i < cmd.length(); i++)
 		{
-			path += cmd;
-			Serial.print("Received initial step: ");
-			Serial.println(cmd);
+			char c = cmd.charAt(i);
+			if (c == 'F' || c == 'B' || c == 'L' || c == 'R')
+			{
+				path += c;
+				Serial.print("Received initial step: ");
+				Serial.println(c);
+			}
 		}
 		delay(10);
 	}
@@ -121,18 +125,17 @@ void loop()
 				// 	runPath();
 				// }
 			}
-			else
+			else // still at node
 			{
-				if (getLeftIRValue() > 200 && getRightIRValue() > 200)
-				{
-					atNode = true;
-				}
-				else
-				{
-					double turn = IR_PID.calculate(getWeightedAvg());
-					driveKinematic(NORMAL_SPEED, turn);
-					turnLast = turn;
-				}
+				// if (getLeftIRValue() > 200 && getRightIRValue() > 200)
+				// {
+				// atNode = true;
+				// }
+				// else
+				// {
+				// /*while still at node, run according to path command*/
+				runPath();
+				// }
 			}
 			// if (cmd == "BT")  //bluetooth mode will not be needed
 			// {
