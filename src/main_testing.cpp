@@ -72,9 +72,14 @@ void loop()
 	String cmd = BlueTooth(); // bluetooth will send the next move of CarCar to it
 
 	// Append only valid directional commands
-	if (cmd == "F" || cmd == "B" || cmd == "L" || cmd == "R")
+	for (int i = 0; i < cmd.length(); i++)
 	{
-		path += cmd;
+		char c = cmd.charAt(i); // 抓出單一字元
+
+		if (c == 'F' || c == 'B' || c == 'L' || c == 'R')
+		{
+			path += c;
+		}
 	}
 	/*Execute any moment*/
 
