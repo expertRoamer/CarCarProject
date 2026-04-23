@@ -82,6 +82,8 @@ void loop()
 	/*Execute every 10ms*/
 	if (currentMillis - previousMillis >= TIME_STEP)
 	{
+		previousMillis = currentMillis; // update  time
+
 		printIRValues();
 		readIRValues();
 		if (atNode)
