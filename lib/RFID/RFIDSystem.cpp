@@ -17,24 +17,23 @@ void CardDectecting(MFRC522 *mfrc522)
         return;
     }
 
-    Serial.println(F("**Card Detected!**"));
+    // Serial.println(F("**Card Detected!**"));
 
     // --- 將 UID 透過藍牙傳送 ---
     String uidString = "UID:";
     for (byte i = 0; i < mfrc522->uid.size; i++)
     {
-        // 將位元組轉成 16 進位，如果小於 0x10 補個 0 比較美觀
+        // 將位元組轉成 16 進位，如果小於 0x10 補個 0 比較美觀且符合格式
         if (mfrc522->uid.uidByte[i] < 0x10)
             uidString += "0";
         uidString += String(mfrc522->uid.uidByte[i], HEX);
 
-        if (i < mfrc522->uid.size - 1)
-            uidString += " "; // 位元組之間加空格
+        // 【已修改】：移除了這裡原本加空格的程式碼，確保產生連續的8碼字串
     }
     uidString.toUpperCase(); // 轉成大寫方便閱讀
 
     // 透過藍牙發送給電腦
-    Serial3.println(F("**Card Detected!**"));
+    // Serial3.println(F("**Card Detected!**"));
     Serial3.println(uidString);
 
     // 同時在電腦序列埠監控視窗顯示，方便除錯

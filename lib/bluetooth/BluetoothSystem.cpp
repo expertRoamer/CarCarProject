@@ -2,9 +2,8 @@
 #include "Constants.h"
 #include "BluetoothSystem.h"
 
-// ESP32 to PC uses Serial3
-// PC to ESP32 uses Serial
-long baudRates[] = {9600, 19200, 38400, 57600, 115200, 4800, 2400, 1200, 230400};
+// Send messenges to PC with Serial3
+long baudRates[] = {9600, 115200, 38400, 57600, 19200, 4800, 2400, 1200, 230400};
 bool moduleReady = false;
 
 bool waitForResponse(const char *expected, unsigned long timeout)
@@ -59,7 +58,6 @@ void BlueToothInit()
             delay(100);
         }
     }
-
     if (!moduleReady)
     {
         Serial.println("Failed to detect HM-10. Check 3.3V VCC and wiring.");
@@ -98,16 +96,11 @@ String BlueTooth()
 {
     String command = "";
 
-    // 1. ESP32 to PC: Forward HM-10 responses to the Serial Monitor
-    if (Serial3.available())
+    // read every character from BT buffer
+    while (Serial3.available() > 0)
     {
-        command = Serial3.readString();
-        command.trim(); // IMPORTANT: Remove \r or \n, otherwise exact string matching will fail
-
-        // Debug: See what was received on the Serial Monitor
-        Serial.print("Bluetooth Received: [");
-        Serial.print(command);
-        Serial.println("]");
+        char c = Serial3.read();
+        command += c;
     }
 
     // 2. PC to ESP32: Read user input and truncate line endings
