@@ -131,6 +131,11 @@ if __name__ == "__main__":
 # from score import ScoreboardServer
 # PORT = 'COM5'
 # EXPECTED_NAME = 'HM10_G6'
+# # ���] result �O BFS ��X�Ӫ����G "ffrlb"
+# commands = list(result.upper()) # �ন�j�g�é ['F', 'F', 'R', 'L', 'B']
+# sent_idx = 0     # �ثe�o�e����@��
+# ack_count = 0    # ���l�w�g�^�������X��
+# WINDOW_SIZE = 3  # ���l�w�s�j�p
 
 # def background_listener(bridge):
 #     while True:

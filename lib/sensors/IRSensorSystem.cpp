@@ -28,8 +28,8 @@ void printIRValues()
             IRvalue += ", ";
         }
     }
-    IRvalue += "]";
-    Serial.println(IRvalue);
+    IRvalue += "";
+    Serial.print(IRvalue);
 }
 
 void correction()
