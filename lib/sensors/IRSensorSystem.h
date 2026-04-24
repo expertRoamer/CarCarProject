@@ -29,4 +29,6 @@ void correction();
 
 void printRawValues();
 
+bool atNodeIR();
+
 #endif // IRSENSOR_SYSTEM_H
