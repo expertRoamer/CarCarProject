@@ -122,16 +122,8 @@ void loop()
 						atNode = false;
 						path.remove(0, 1);
 					}
-				}
-				else if (rotationalBrake)
-				{
-					if (millis() - timestamp < 50)
+					else if (path[0] == 'B' && startPID(250, 250, getLeftIRValue(), getLeftCenterIRValue(), getRightIRValue(), getRightCenterIRValue(), getWeightedAvg()))
 					{
-						drive(-255 * turningDir, 255 * turningDir);
-					}
-					else
-					{
-						rotationalBrake = false;
 						atNode = false;
 						path.remove(0, 1);
 					}
