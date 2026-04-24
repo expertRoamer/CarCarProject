@@ -1,5 +1,3 @@
-// testing point-wise transmission
-// testing point-wise transmission
 #include <Arduino.h>
 #include <SPI.h>
 #include <MFRC522.h>
@@ -16,20 +14,14 @@ MFRC522 *mfrc522;
 
 PIDController IR_PID(30, 0, 80); // 40
 
-// String path = "LBRBLBRB";
-String path = ""; // path will be sent by bluetooth
-
-// String path = ""; // path will be sent by bluetooth
-
+String path = "FRBRBRB";
 bool atNode = false;
 bool first = true;
 double turnLast = 0.0;
-unsigned long previousMillis = 0UL; // For time counting
-unsigned long currentMillis = 0UL;
+
+void runPath();
 int num = 0;
 int sum[5] = {};
-
-bool BLUETOOTH_MODE = false; // ï¿½Î¨Ó¤ï¿½ï¿½ï¿½ï¿½Ò¦ï¿½
 
 void setup()
 {
@@ -54,156 +46,126 @@ void setup()
 	mfrc522 = new MFRC522(SS_PIN, RST_PIN);
 	mfrc522->PCD_Init();
 
-	BlueToothInit(); // Keep Commented out Unless Initializing A Brand New Module
-	while (path.length() < 3)
-	{
-		String cmd = BlueTooth();
-		for (int i = 0; i < cmd.length(); i++)
-		{
-			char c = cmd.charAt(i);
-			if (c == 'F' || c == 'B' || c == 'L' || c == 'R')
-			{
-				path += c;
-				Serial.print("Received initial step: ");
-				Serial.println(c);
-			}
-		}
-		delay(10);
-	}
+	// BlueToothInit(); // Keep commented out unless initializing a brand new module
 }
 
 void loop()
 {
-	/*Execute any moment*/
 	CardDectecting(mfrc522);
-	String cmd = BlueTooth(); // bluetooth will send the next move of CarCar to it
+	String cmd = BlueTooth();
 
-	// Append only valid directional commands
-	for (int i = 0; i < cmd.length(); i++)
+	if (cmd != "")
 	{
-		char c = cmd.charAt(i); // §ì¥X³æ¤@¦r¤¸
-
-		if (c == 'F' || c == 'B' || c == 'L' || c == 'R')
+		if (cmd == "S")
 		{
-			path += c;
+			drive(0, 0);
+			path = ""; // Clear buffer on emergency stop
+			Serial.println("Emergency Stop. Path cleared.");
+		}
+		else if (cmd == "F" || cmd == "B" || cmd == "L" || cmd == "R")
+		{
+			path += cmd; // Append only valid directional commands
 		}
 	}
-	/*Execute any moment*/
 
-	currentMillis = millis(); // get current time
-	/*Execute every 10ms*/
-	if (currentMillis - previousMillis >= TIME_STEP)
+	printIRValues();
+	readIRValues();
+
+	if (atNode)
 	{
-		previousMillis = currentMillis; // update  time
-
-		printIRValues();
-		void loop()
+		if (path.length() == 0)
 		{
-			// CardDectecting(mfrc522);
-			// String cmd = ""; // ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½Å¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½O
-			String cmd = BlueTooth(); // ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½Å¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½O
-
-			if (!isRunning)
-				return;
-
-			printIRValues();
-			Serial.println("");
-
-			if (!BLUETOOTH_MODE)
-			{
-				readIRValues();
-
-				Serial.print(", ");
-				Serial.print(atNode);
-				Serial.print(", ");
-				Serial.print(getWeightedAvg());
-				Serial.print(", ");
-				if (atNode)
-				{
-					if (path[0] != 'B' && (getCenterIRValue() + getLeftCenterIRValue() + getRightCenterIRValue()) > 200 && getLeftIRValue() < 100 && getRightIRValue() < 100)
-					{
-						atNode = false;
-						path.remove(0, 1);
-					}
-					else if (path[0] == 'B' && startPID(250, 250, getLeftIRValue(), getLeftCenterIRValue(), getRightIRValue(), getRightCenterIRValue(), getWeightedAvg()))
-					{
-						atNode = false;
-						path.remove(0, 1);
-					}
-					else
-					{
-						runPath();
-					}
-				}
-				else
-				{
-					if (getLeftIRValue() > 200 && getRightIRValue() > 200)
-					{
-						atNode = true;
-					}
-					else
-					{
-						double turn = IR_PID.calculate(getWeightedAvg());
-						driveKinematic(NORMAL_SPEED, turn);
-						turnLast = turn;
-					}
-				}
-				if (cmd == "BT")
-				{
-					BLUETOOTH_MODE = true;
-					drive(0, 0);
-					Serial.println("****Switched to BLUETOOTH mode.****");
-				}
-			}
-			else // ï¿½Å¤ï¿½ï¿½ï¿½Ê¼Ò¦ï¿?
-			{
-				if (cmd == "F")
-					drive(NORMAL_SPEED, NORMAL_SPEED); // ï¿½eï¿½i
-				else if (cmd == "B")
-					drive(-NORMAL_SPEED, -NORMAL_SPEED); // ï¿½ï¿½h
-				else if (cmd == "L")
-					drive(-NORMAL_SPEED, NORMAL_SPEED); // ï¿½ï¿½ï¿½ï¿½
-				else if (cmd == "R")
-					drive(NORMAL_SPEED, -NORMAL_SPEED); // ï¿½kï¿½ï¿½
-				else if (cmd == "S")
-					drive(0, 0);
-				else if (cmd == "AUTO")
-				{
-					BLUETOOTH_MODE = false;
-					Serial.println("****Switched to AUTO mode.****");
-				}
-			}
-
-			Serial.println(turnLast);
+			drive(0, 0);
 			delay(TIME_STEP);
+			return;
 		}
 
-		void runPath()
+		// Check if intersection clear condition is met (for F, L, R)
+		if ((getCenterIRValue() + getLeftCenterIRValue() + getRightCenterIRValue()) > 200 && getLeftIRValue() < 100 && getRightIRValue() < 100)
 		{
-			char command = path.charAt(0);
-
-			if (command == 'F')
+			atNode = false;
+			Serial3.println("STEP_DONE"); // Send ACK to Python
+			if (path.length() > 0)
 			{
-				driveKinematic(NORMAL_SPEED, 0);
+				path.remove(0, 1);
 			}
-			else if (command == 'L')
+		}
+		// Check if intersection clear condition is met (for Backward)
+		else if (path[0] == 'B' && startPID(150, 150, getLeftIRValue(), getLeftCenterIRValue(), getRightIRValue(), getRightCenterIRValue()))
+		{
+			atNode = false;
+			Serial3.println("STEP_DONE");
+			if (path.length() > 0)
 			{
-				drive(0, 150);
-				turningDir = -1;
-			}
-			else if (command == 'R')
-			{
-				drive(150, 0);
-				turningDir = 1;
-			}
-			else if (command == 'B')
-			{
-				back(150, 150, getCenterIRValue(), getLeftCenterIRValue(), getRightCenterIRValue(), getRightIRValue());
-				turningDir = -1;
+				path.remove(0, 1);
 			}
 			else
 			{
-				isRunning = false;
-				drive(0, 0);
+				runPath();
 			}
 		}
+		else
+		{
+			if (getLeftIRValue() > 200 && getRightIRValue() > 200)
+			{
+				atNode = true;
+			}
+			else
+			{
+				double turn = IR_PID.calculate(getWeightedAvg());
+				driveKinematic(NORMAL_SPEED, turn);
+				turnLast = turn;
+			}
+		}
+		if (cmd == "BT")
+		{
+			BLUETOOTH_MODE = true;
+			drive(0, 0);
+			Serial.println("****Switched to BLUETOOTH mode.****");
+		}
+	}
+	else // ï¿½Å¤ï¿½ï¿½ï¿½Ê¼Ò¦ï¿?
+	{
+		if (cmd == "F")
+			drive(NORMAL_SPEED, NORMAL_SPEED); // ï¿½eï¿½i
+		else if (cmd == "B")
+			drive(-NORMAL_SPEED, -NORMAL_SPEED); // ï¿½ï¿½h
+		else if (cmd == "L")
+			drive(-NORMAL_SPEED, NORMAL_SPEED); // ï¿½ï¿½ï¿½ï¿½
+		else if (cmd == "R")
+			drive(NORMAL_SPEED, -NORMAL_SPEED); // ï¿½kï¿½ï¿½
+		else if (cmd == "S")
+			drive(0, 0);
+		else if (cmd == "AUTO")
+		{
+			BLUETOOTH_MODE = false;
+			Serial.println("****Switched to AUTO mode.****");
+		}
+	}
+	delay(TIME_STEP);
+}
+
+void runPath()
+{
+	if (path.length() == 0)
+		return; // Extra safety guard
+
+	char command = path.charAt(0);
+
+	if (command == 'F')
+	{
+		driveKinematic(NORMAL_SPEED, 0);
+	}
+	else if (command == 'L')
+	{
+		drive(-50, 255);
+	}
+	else if (command == 'R')
+	{
+		drive(255, -50);
+	}
+	else if (command == 'B')
+	{
+		back(150, 150, getCenterIRValue(), getLeftCenterIRValue(), getRightCenterIRValue(), getRightIRValue());
+	}
+}
