@@ -24,13 +24,13 @@ def execute_auto_path(bridge, path_string, point):
     total_steps = len(commands)
     sent_idx = 0
     ack_count = 0
+    rx_buffer = ""
 
     print("\n" + "="*40)
     print(f"Starting fully automated continuous scoring mission!")
     print(f"Total steps: {total_steps}")
     print("="*40)
 
-    # 1. Initial Fill: Send the first 3 commands to the car
     for _ in range(WINDOW_SIZE):
         if sent_idx < total_steps:
             bridge.send(commands[sent_idx])
@@ -38,75 +38,44 @@ def execute_auto_path(bridge, path_string, point):
             sent_idx += 1
             time.sleep(0.1)
 
-    # 2. Enter Sliding Window Listener Loop
     while ack_count < total_steps:
-        msg = bridge.listen()
+        raw_msg = bridge.listen()
         
-        # Process any received signal immediately
-        if msg:
-            msg = msg.strip()
+        if raw_msg:
+            rx_buffer += raw_msg
             
-            if not msg:
-                continue # Skip empty lines
-            
-            # --- Case A: Received Step ACK from Car ---
-            if "STEP_DONE" in msg:
-                ack_count += 1
-                print(f"\n[PROGRESS] Node reached, completed step {ack_count}")
+            while '\n' in rx_buffer:
+                line, rx_buffer = rx_buffer.split('\n', 1)
+                msg = line.strip()
                 
-                if sent_idx < total_steps:
-                    bridge.send(commands[sent_idx])
-                    print(f"[SEND] Next command {sent_idx+1}/{total_steps}: {commands[sent_idx]}")
-                    sent_idx += 1
+                if not msg:
+                    continue
+                
+                if "STEP_DONE" in msg:
+                    ack_count += 1
+                    print(f"\n[PROGRESS] Node reached, completed step {ack_count}")
                     
-            elif "UID:" in msg:
-                # Clean the UID as we did before
-                clean_uid = msg.replace("UID:", "").replace(" ", "").strip()
-                
-                # Extra Failsafe: Ensure it's exactly 8 characters before sending to server
-                if len(clean_uid) >= 8:
-                    clean_uid = clean_uid[:8]
-                if len(clean_uid) == 8:
-                    print(f"\n[RFID] Treasure found! Read UID: {clean_uid}")
-                    try:
-                        current_score, time_left = point.add_UID(clean_uid)
-                        print(f"Server Response -> Current Score: {current_score}, Time Left: {time_left}s")
-                        # point.add_UID("10BA617E")
-                        # point.add_UID("84EAB017")
-                        # point.add_UID("50335F7E")
-                        # point.add_UID("353D0AD6")
-                        # point.add_UID("556D04D6")
-                        # point.add_UID("C59B51D0")
-                        # point.add_UID("5205171E")
-                        # point.add_UID("9AC0538D")
-                        # point.add_UID("53FE3C31")
-                        # point.add_UID("F159AF1E")
-                        # point.add_UID("00000000")
-                        # point.add_UID("11111111")
-                        # point.add_UID("22222222")
-                        # point.add_UID("33333333")
-                        # point.add_UID("44444444")
-                        # point.add_UID("55555555")
-                        # point.add_UID("66666666")
-                        # point.add_UID("77777777")
-                        # point.add_UID("88888888")
-                        # point.add_UID("99999999")
-                        # point.add_UID("AAAAAAAA")
-                        # point.add_UID("BBBBBBBB")
-                        # point.add_UID("CCCCCCCC")
-                        # point.add_UID("DDDDDDDD")
-                        # point.add_UID("EEEEEEEE")
-                        # point.add_UID("FFFFFFFF")
-                    except Exception as e:
-                        print(f"Failed to upload score: {e}")
+                    if sent_idx < total_steps:
+                        bridge.send(commands[sent_idx])
+                        print(f"[SEND] Next command {sent_idx+1}/{total_steps}: {commands[sent_idx]}")
+                        sent_idx += 1
+                        
+                elif "UID:" in msg:
+                    clean_uid = msg.replace("UID:", "").replace(" ", "").strip()
+                    
+                    if len(clean_uid) == 8:
+                        print(f"\n[RFID] Treasure found! Read UID: {clean_uid}")
+                        try:
+                            current_score, time_left = point.add_UID(clean_uid)
+                            print(f"Server Response -> Current Score: {current_score}, Time Left: {time_left}s")
+                        except Exception as e:
+                            print(f"Failed to upload score: {e}")
+                    else:
+                        print(f"Warning: UID length incorrect ({len(clean_uid)} chars). Skipped: {clean_uid}")
+                        
                 else:
-                    # Skip invalid packets to prevent crashes
-                    print(f"Warning: UID length incorrect ({len(clean_uid)} chars). Skipped: {clean_uid}")
+                    print(f"[CAR] {msg}")
                     
-            # --- Case C: Other messages from Car ---
-            else:
-                print(f"[CAR] {msg}")
-                
         time.sleep(0.01)
 
     print("\n" + "="*40)
