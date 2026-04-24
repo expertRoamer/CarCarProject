@@ -9,7 +9,30 @@ void driveKinematic(double speed, double turn)
 {
     double vL = speed + turn;
     double vR = speed - turn;
-    drive(vL, vR);
+
+    if (abs(vL - vR) > 510) {
+        if (vL - vR > 0) {
+            vL = 255;
+            vR = -255;
+        } else {
+            vL = -255;
+            vR = 255;
+        }
+    }
+
+    if (abs(vL) > 255) {
+        double shift = abs(vL) - 255;
+        vR -= vL > 0 ? shift : -shift;
+        vL = vL > 0 ? 255 : -255;
+    }
+
+    if (abs(vR) > 255) {
+        double shift = abs(vR) - 255;
+        vL -= vR > 0 ? shift : -shift;
+        vR = vR > 0 ? 255 : -255;
+    }
+
+    driveHard(vL, vR);
 }
 
 // ���k������
@@ -67,7 +90,7 @@ void back(int left_bound, int right_bound, int leftIR, int left_centerIR, int ri
         drive(-255, 255);
 }
 
-bool startPID(int left_bound, int right_bound, int leftIR, int left_centerIR, int rightIR, int right_centerIR)
+bool startPID(int left_bound, int right_bound, int leftIR, int left_centerIR, int rightIR, int right_centerIR, double weightedAvg)
 {
     return ((leftIR + left_centerIR > left_bound) && (rightIR + right_centerIR < right_bound));
 }
