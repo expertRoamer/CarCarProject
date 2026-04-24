@@ -12,16 +12,23 @@
 
 MFRC522 *mfrc522;
 
-PIDController IR_PID(150, 0.0, 0.); // 80
+PIDController IR_PID(30, 0, 80); // 40
 
-String path = "FRBRBRB";
+String path = "LBRBLBRB";
 bool atNode = false;
 bool first = true;
-double turnLast = 0.0;
+double turn = 0.0;
 
 void runPath();
 int num = 0;
 int sum[5] = {};
+
+bool isRunning = true;
+bool translationalBrake = false;
+bool rotationalBrake = false;
+int turningDir = 1; // i: clockwise; -1: counterclockwise
+unsigned long timestamp = 0;
+unsigned long lastTime = 0;
 
 bool BLUETOOTH_MODE = false; // �ΨӤ����Ҧ�
 
@@ -50,60 +57,72 @@ void setup() {
 	mfrc522->PCD_Init();
 }
 
-void loop()
-{
-	CardDectecting(mfrc522);
+void loop() {
+	// CardDectecting(mfrc522);
 	// String cmd = ""; // �����Ӧ��Ť������O
 	String cmd = BlueTooth(); // �����Ӧ��Ť������O
+
+	if (!isRunning) return;
+
 	printIRValues();
-	if (!BLUETOOTH_MODE) // �۰ʼҦ�
-	{
+	Serial.println("");
+
+	if (!BLUETOOTH_MODE) {
 		readIRValues();
 
-		Serial.print(", ");
-		Serial.print(atNode);
-		Serial.print(", ");
-		Serial.print(getWeightedAvg());
-		Serial.print(", ");
-		if (atNode)
-		{
-			if (path[0] != 'B' && (getCenterIRValue() + getLeftCenterIRValue() + getRightCenterIRValue()) > 200 && getLeftIRValue() < 100 && getRightIRValue() < 100)
-			{
-				atNode = false;
-				path.remove(0, 1);
-			}
-			else if (path[0] == 'B' && startPID(250, 250, getLeftIRValue(), getLeftCenterIRValue(), getRightIRValue(), getRightCenterIRValue(), getWeightedAvg()))
-			{
-				atNode = false;
-				path.remove(0, 1);
-			}
-			else
-			{
+		// Serial.print(", ");
+		// Serial.print(atNode);
+		// Serial.print(", ");
+		// Serial.print(getWeightedAvg());
+		// Serial.print(", ");
+
+		if (translationalBrake) {
+			if (millis() - timestamp < 100) {
+				drive(-255, -255);
+			} else {
+				drive(0, 0);
+				// isRunning = false;
+				translationalBrake = false;
 				runPath();
 			}
-		}
-		else
-		{
-			if (getLeftIRValue() > 200 && getRightIRValue() > 200)
-			{
+		} else if (rotationalBrake) {
+			if (millis() - timestamp < 50) {
+				drive(-255 * turningDir, 255 * turningDir);
+			} else {
+				rotationalBrake = false;
+				atNode = false;
+				path.remove(0, 1);
+				// drive(0, 0);
+				// isRunning = false;
+			}
+		} else if (atNode) {
+			if (getLeftIRValue() < 100 && getRightIRValue() < 100 && max(max(getCenterIRValue(), getLeftCenterIRValue()), getRightCenterIRValue()) > 100 && millis() - timestamp > 500) {
+				if (!rotationalBrake) {
+					rotationalBrake = true;
+					timestamp = millis();
+					drive(0, 0);
+				}
+			}
+		} else {
+			if (atNodeIR()) {
 				atNode = true;
-			}
-			else
-			{
-				double turn = IR_PID.calculate(getWeightedAvg());
-				driveKinematic(NORMAL_SPEED, turn);
-				turnLast = turn;
+				if (!translationalBrake) {
+					translationalBrake = true;
+					timestamp = millis();
+					drive(0, 0);
+				}
+			} else {
+				turn = IR_PID.calculate(0.0, getWeightedAvg());
+				driveKinematic(NORMAL_SPEED, -turn);
 			}
 		}
-		if (cmd == "BT")
-		{
+
+		if (cmd == "BT") {
 			BLUETOOTH_MODE = true;
 			drive(0, 0);
 			Serial.println("****Switched to BLUETOOTH mode.****");
 		}
-	}
-	else // �Ť���ʼҦ�
-	{
+	} else {
 		if (cmd == "F")
 			drive(NORMAL_SPEED, NORMAL_SPEED); // �e�i
 		else if (cmd == "B")
@@ -121,12 +140,13 @@ void loop()
 		}
 	}
 
-	Serial.println(turnLast);
-	delay(TIME_STEP);
+	// Serial.println(turn);
+	// delay(TIME_STEP);
+	// Serial.println(millis() - lastTime);
+	// lastTime = millis();
 }
 
-void runPath()
-{
+void runPath() {
 	char command = path.charAt(0);
 	// Serial.println(command);
 	if (command == 'F')
@@ -135,14 +155,20 @@ void runPath()
 	}
 	else if (command == 'L')
 	{
-		drive(-50, 255);
+		drive(0, 150);
+		turningDir = -1;
 	}
 	else if (command == 'R')
 	{
-		drive(255, -50);
+		drive(150, 0);
+		turningDir = 1;
 	}
 	else if (command == 'B')
 	{
 		back(150, 150, getCenterIRValue(), getLeftCenterIRValue(), getRightCenterIRValue(), getRightIRValue());
+		turningDir = -1;
+	} else {
+		isRunning = false;
+		drive(0, 0);
 	}
 }
