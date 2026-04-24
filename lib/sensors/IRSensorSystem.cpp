@@ -3,13 +3,12 @@
 #include "IRSensorSystem.h"
 
 int values[5] = {0, 0, 0, 0, 0};
-double w[5] = {-3, -1, 0, 1, 3};
+double w[5] = {-2, -1, 0, 1, 2};
 
-double IR_Low[] = {32, 49, 45, 68, 50};
-double IR_High[] = {548, 536, 528, 571, 615};
+double IR_Low[] = {27, 26, 28, 30, 27};
+double IR_High[] = {258, 314, 288, 375, 300};
 
-void readIRValues()
-{
+void readIRValues() {
     values[0] = linear(analogRead(IR_LEFT), IR_Low[0], IR_High[0]);
     values[1] = linear(analogRead(IR_LEFT_CENTER), IR_Low[1], IR_High[1]);
     values[2] = linear(analogRead(IR_CENTER), IR_Low[2], IR_High[2]);
@@ -17,85 +16,79 @@ void readIRValues()
     values[4] = linear(analogRead(IR_RIGHT), IR_Low[4], IR_High[4]);
 }
 
-void printIRValues()
-{
-    String IRvalue = "[";
-    for (int i = 0; i < 5; i++)
-    {
+void printRawValues() {
+    Serial.print(analogRead(IR_LEFT));
+    Serial.print(", ");
+    Serial.print(analogRead(IR_LEFT_CENTER));
+    Serial.print(", ");
+    Serial.print(analogRead(IR_CENTER));
+    Serial.print(", ");
+    Serial.print(analogRead(IR_RIGHT_CENTER));
+    Serial.print(", ");
+    Serial.print(analogRead(IR_RIGHT));
+}
+
+void printIRValues() {
+    String IRvalue = "";
+    for (int i = 0; i < 5; i++) {
         IRvalue += String(values[i]);
-        if (i < 4)
-        {
+        if (i < 4) {
             IRvalue += ", ";
         }
     }
     IRvalue += "";
     Serial.print(IRvalue);
 }
-
-void correction()
-{
+void printIRValuesBT() {
+    String IRvalue = "";
+    for (int i = 0; i < 5; i++) {
+        IRvalue += String(values[i]);
+        if (i < 4) {
+            IRvalue += ", ";
+        }
+    }
+    IRvalue += "";
+    Serial3.println(IRvalue);
 }
 
-void printRawValues()
-{
-    String IRvalue = "[";
-    IRvalue += String(analogRead(IR_LEFT));
-    IRvalue += ", ";
-    IRvalue += String(analogRead(IR_LEFT_CENTER));
-    IRvalue += ", ";
-    IRvalue += String(analogRead(IR_CENTER));
-    IRvalue += ", ";
-    IRvalue += String(analogRead(IR_RIGHT_CENTER));
-    IRvalue += ", ";
-    IRvalue += String(analogRead(IR_RIGHT));
-    IRvalue += "]";
-    Serial.println(IRvalue);
-}
-
-double getWeightedAvg()
-{
+double getWeightedAvg() {
     double sum = 0;
-    for (int i = 0; i < 5; i++)
-    {
+    for (int i = 0; i < 5; i++) {
         sum += values[i] * w[i];
     }
     return sum / (values[0] + values[1] + values[2] + values[3] + values[4]);
 }
 
-int getLeftIRValue()
-{
+int getLeftIRValue() {
     return values[0];
 }
 
-int getLeftCenterIRValue()
-{
+int getLeftCenterIRValue() {
     return values[1];
 }
 
-int getCenterIRValue()
-{
+int getCenterIRValue() {
     return values[2];
 }
 
-int getRightCenterIRValue()
-{
+int getRightCenterIRValue() {
     return values[3];
 }
 
-int getRightIRValue()
-{
+int getRightIRValue() {
     return values[4];
 }
 
-void getAverage(int sum[5])
-{
-    for (int i = 0; i < 5; i++)
-    {
+void getAverage(int sum[5]) {
+    for (int i = 0; i < 5; i++) {
         sum[i] += values[i];
     }
 }
 
-int linear(int x, double low, double high)
-{
+int linear(int x, double low, double high) {
     return 50 + (x - low) / (high - low) * (550);
+}
+
+bool atNodeIR() {
+    return getCenterIRValue() > 150 && getLeftCenterIRValue() > 150 && getRightCenterIRValue() > 150;
 }
