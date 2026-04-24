@@ -5,8 +5,9 @@
 int values[5] = {0, 0, 0, 0, 0};
 double w[5] = {-2, -1, 0, 1, 2};
 
-double IR_Low[] = {27, 26, 28, 30, 27};
-double IR_High[] = {258, 314, 288, 375, 300};
+unsigned long lastAtNode = 0;
+double IR_Low[] = {33, 29, 28, 47, 29};
+double IR_High[] = {294.000000, 267.000000, 257.000000, 388.000000, 276.000000};
 
 void readIRValues() {
     values[0] = linear(analogRead(IR_LEFT), IR_Low[0], IR_High[0]);
@@ -90,5 +91,10 @@ int linear(int x, double low, double high) {
 }
 
 bool atNodeIR() {
-    return getCenterIRValue() > 150 && getLeftCenterIRValue() > 150 && getRightCenterIRValue() > 150;
+    if ((millis() - lastAtNode >= 200 || lastAtNode == 0) && (getLeftIRValue() > 200 || getRightIRValue() > 200) && getCenterIRValue() > 200 && getLeftCenterIRValue() > 200 && getRightCenterIRValue() > 20) {
+        lastAtNode = millis();
+        return true;
+    }
+
+    return false;
 }
