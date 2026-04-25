@@ -18,7 +18,7 @@ class Scoreboard(abc.ABC):
     @abc.abstractmethod
     def add_UID(self, UID_str: str) -> Tuple[int, float]:
         """Send {UID_str} to server to update score. Returns (score, time_remaining)."""
-        
+        pass
 
     @abc.abstractmethod
     def get_current_score(self) -> Optional[int]:
@@ -84,7 +84,7 @@ class ScoreboardServer(Scoreboard):
     The Scoreboard class connects to the server socket and enables updating score by sending UID.
     """
 
-    def __init__(self, teamname: str, host=f"http://140.112.175.18:4000", debug=False):
+    def __init__(self, teamname: str, host=f"http://localhost:3000", debug=False):
         self.teamname = teamname
         self.ip = host
 

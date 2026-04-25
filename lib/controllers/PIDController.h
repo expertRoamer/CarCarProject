@@ -12,7 +12,7 @@ public:
 
     PIDController(double Kp, double Ki, double Kd) : Kp(Kp), Ki(Ki), Kd(Kd) {}
 
-    double calculate(double setpoint, double measurement)
+    double calculate(double setpoint, double measurement, double time)
     {
         double error = setpoint - measurement;
 
@@ -23,10 +23,10 @@ public:
         }
         else
         {
-            integral += error * TIME_STEP;
+            integral += error * time;
         }
 
-        double derivative = (error - lastError) / TIME_STEP;
+        double derivative = (error - lastError) / time;
         // Serial.print(Kp * error);
         // Serial.print(", ");
         // Serial.print(Ki * integral);

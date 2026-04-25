@@ -1,28 +1,37 @@
 #include "RFIDSystem.h"
 #include <Arduino.h>
 
-// ¨®¨®¶Çµ¹¹q¸£¥ÎSerial3
-// ¹q¸£¶Çµ¹¨®¨®¥ÎSerial
-void CardDectecting(MFRC522 *mfrc522)
+
+String uids[20];
+unsigned long timestamps[20];
+int i = 0;
+String CARD = "45764D73";
+
+// ï¿½ï¿½ï¿½ï¿½ï¿½Çµï¿½ï¿½qï¿½ï¿½ï¿½ï¿½Serial3
+// ï¿½qï¿½ï¿½ï¿½Çµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Serial
+bool CardDectecting(MFRC522 *mfrc522)
 {
-    // 1. ÀË¬d¬O§_¦³·s¥d¤ù
+    // 1. ï¿½Ë¬dï¿½Oï¿½_ï¿½ï¿½ï¿½sï¿½dï¿½ï¿½
     if (!mfrc522->PICC_IsNewCardPresent())
     {
-        return;
+        return false;
     }
 
-    // 2. ¹Á¸ÕÅª¨ú¥d¤ù¸ê®Æ
+    // 2. ï¿½ï¿½ï¿½ï¿½Åªï¿½ï¿½ï¿½dï¿½ï¿½ï¿½ï¿½ï¿?
     if (!mfrc522->PICC_ReadCardSerial())
     {
-        return;
+        return false;
     }
 
     Serial.println(F("**Card Detected!**"));
+    Serial.println(F("**Card Detected!**"));
 
+    // --- ï¿½N UID ï¿½zï¿½Lï¿½Å¤ï¿½ï¿½Ç°e ---
     // --- ï¿½N UID ï¿½zï¿½Lï¿½Å¤ï¿½ï¿½Ç°e ---
     String uidString = "UID:";
     for (byte i = 0; i < mfrc522->uid.size; i++)
     {
+        // ï¿½Nï¿½ì¤¸ï¿½ï¿½ï¿½à¦¨ 16 ï¿½iï¿½ï¿½Aï¿½pï¿½Gï¿½pï¿½ï¿½ 0x10 ï¿½É­ï¿½ 0 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[
         // ï¿½Nï¿½ì¤¸ï¿½ï¿½ï¿½à¦¨ 16 ï¿½iï¿½ï¿½Aï¿½pï¿½Gï¿½pï¿½ï¿½ 0x10 ï¿½É­ï¿½ 0 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[
         if (mfrc522->uid.uidByte[i] < 0x10)
             uidString += "0";
@@ -38,10 +47,25 @@ void CardDectecting(MFRC522 *mfrc522)
     Serial3.println(uidString);
 
     // ï¿½Pï¿½É¦bï¿½qï¿½ï¿½ï¿½Ç¦Cï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü¡Aï¿½ï¿½Kï¿½ï¿½ï¿½ï¿½
-    Serial.print("Sending to Bluetooth: ");
-    Serial.println(uidString);
+    // Serial.print("Sending to Bluetooth: ");
+    // Serial.println(uidString);
+
+    if (uidString == CARD) {
+        for (int j = 0; j < i; j++) {
+            Serial.print(uidString[j]);
+            Serial.print(", ");
+            Serial.println(timestamps[j]);
+        }
+    } else {
+        uids[i] = uidString;
+        timestamps[i] = millis();
+        i++;
+    }
+
     // ---------------------------------------
 
     mfrc522->PICC_HaltA();      // ï¿½ï¿½ï¿½dï¿½ï¿½ï¿½iï¿½Jï¿½ï¿½ï¿½ï¿½Ò¦ï¿?
     mfrc522->PCD_StopCrypto1(); // ï¿½ï¿½ï¿½ï¿½[ï¿½Kï¿½ï¿½ï¿½ï¿½
+
+    return true;
 }
