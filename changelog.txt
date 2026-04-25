@@ -4,3 +4,20 @@
     - Redirect platform to VSCode + PlatformIO
     - Regrouped program: 
 }
+
+2026/04/25 v1.0.0 {
+    - Completed middle-map full traverse and RFID scan
+    - Tuned PID controller
+    - Revised criteria for enter node and leave node
+    - Added reverse brake mechanism
+    Notice:
+    1. If the car is being hit / bump into walls / withstand large acceleration,
+        re-calibrate your IR sensors IMMEDIATELY.
+    1. If you encounter any trajectory issues, use first resolve of:
+        a. Re-calibrate IR sensor's white values. (dark values are rarely needed to be calibrated)
+        b. Make sure you don't have anything time-consuming functions running repeatedly in loop().
+           These functions include but not limited to Serial.print(ln), CardDetecting, etc.
+           The optimal loop period should be around 7-8 ms if measured by printing values.
+        c. Make sure the battery has enough power and voltage above 12V.
+    3. If anything went wrong, suspect IR SENSORS first.
+}

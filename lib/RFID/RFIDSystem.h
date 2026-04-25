@@ -3,6 +3,6 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
-void CardDectecting(MFRC522 *);
+bool CardDectecting(MFRC522 *);
 
 #endif // RFIDSYSTEM_H

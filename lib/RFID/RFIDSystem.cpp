@@ -1,20 +1,26 @@
 #include "RFIDSystem.h"
 #include <Arduino.h>
 
+
+String uids[20];
+unsigned long timestamps[20];
+int i = 0;
+String CARD = "45764D73";
+
 // �����ǵ��q����Serial3
 // �q���ǵ�������Serial
-void CardDectecting(MFRC522 *mfrc522)
+bool CardDectecting(MFRC522 *mfrc522)
 {
     // 1. �ˬd�O�_���s�d��
     if (!mfrc522->PICC_IsNewCardPresent())
     {
-        return;
+        return false;
     }
 
     // 2. ����Ū���d�����?
     if (!mfrc522->PICC_ReadCardSerial())
     {
-        return;
+        return false;
     }
 
     Serial.println(F("**Card Detected!**"));
@@ -41,10 +47,25 @@ void CardDectecting(MFRC522 *mfrc522)
     Serial3.println(uidString);
 
     // �P�ɦb�q���ǦC��ʱ�������ܡA��K����
-    Serial.print("Sending to Bluetooth: ");
-    Serial.println(uidString);
+    // Serial.print("Sending to Bluetooth: ");
+    // Serial.println(uidString);
+
+    if (uidString == CARD) {
+        for (int j = 0; j < i; j++) {
+            Serial.print(uidString[j]);
+            Serial.print(", ");
+            Serial.println(timestamps[j]);
+        }
+    } else {
+        uids[i] = uidString;
+        timestamps[i] = millis();
+        i++;
+    }
+
     // ---------------------------------------
 
     mfrc522->PICC_HaltA();      // ���d���i�J����Ҧ�?
     mfrc522->PCD_StopCrypto1(); // ����[�K����
+
+    return true;
 }

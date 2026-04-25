@@ -95,20 +95,17 @@ void driveIndividual(int pwm, int in1, int in2, double v) {
 }
 
 void back(int left_bound, int right_bound, int leftIR, int left_centerIR, int rightIR, int right_centerIR) {
-    if ((leftIR + left_centerIR > left_bound) && (rightIR + right_centerIR < right_bound))
-        drive(NORMAL_SPEED, NORMAL_SPEED);
-    else
         drive(-70, 70);
 }
 
-bool startPID(double weightedAvg) {
+bool startPID(double irValue) {
     if (reachMin) {
-        bool output = weightedAvg >= -1.5;
+        bool output = irValue >= 200;
         if (output) reachMin = false;
         return output;
     }
 
-    if (weightedAvg <= LEAVE_NODE_THRESHOLD) {
+    if (irValue <= 100) {
         reachMin = true;
     }
 
