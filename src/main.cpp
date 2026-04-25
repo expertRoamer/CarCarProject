@@ -15,7 +15,8 @@ MFRC522 *mfrc522;
 PIDController IR_PID(50, 0, 1000); // Previous :(60, 0, 100) turn : (50, 0, 100)
 // PIDController TURN_PID(50, 0, 200); 60 200
 
-String path = "FFLFBFRRLRALLFRAF"; // A: clockwise 180; B: counterclockwise 180
+// String path = "FFLFBFRRLRALLFRAF"; // A: clockwise 180; B: counterclockwise 180
+String path = ""; // Point-wise
 bool atNode = false;
 bool first = true;
 
@@ -35,7 +36,7 @@ unsigned long lastTime = 0;
 
 bool lockRFID = false;
 
-bool BLUETOOTH_MODE = false; // �ΨӤ����Ҧ�
+bool BLUETOOTH_MODE = false; //
 
 void setup()
 {
@@ -53,29 +54,61 @@ void setup()
 	pinMode(IR_RIGHT_CENTER, INPUT);
 	pinMode(IR_RIGHT, INPUT);
 
-	// BlueToothInit();
+	BlueToothInit();
 
+	// Serial.begin(115200);
 	Serial.begin(9600);
 	Serial3.begin(9600);
 
 	SPI.begin();
 	mfrc522 = new MFRC522(SS_PIN, RST_PIN);
 	mfrc522->PCD_Init();
+
+	// Takes in initial 3 commands
+	while (path.length() < 3)
+	{
+		String cmd = BlueTooth();
+		for (unsigned int i = 0; i < cmd.length(); i++)
+		{
+			char c = cmd.charAt(i);
+			if (c == 'F' || c == 'B' || c == 'L' || c == 'R' || c == 'A')
+			{
+				path += c;
+				// Serial.print("Received initial step: ");
+				// Serial.println(c);
+			}
+		}
+		delay(10);
+	}
 }
 
 void loop()
 {
-	if (path.length() == 0 || path[0] == 'B')
+	while (Serial3.available() > 0)
+	{
+		char c = (char)Serial3.read();
+
+		// Append available path commend
+		if (c == 'F' || c == 'B' || c == 'L' || c == 'R' || c == 'A')
+		{
+			path += c;
+		}
+	}
+	if (path.length() == 0 || (path.length() > 0 && path[0] == 'B'))
 	{
 		if (CardDectecting(mfrc522) && !lockRFID)
 		{
 			lockRFID = true;
 		}
 	}
-
-	// CardDectecting(mfrc522);
-	// String cmd = ""; // �����Ӧ��Ť������O
-	String cmd = BlueTooth(); // �����Ӧ��Ť������O
+	// if (!lockRFID)
+	// {
+	// 	if (CardDectecting(mfrc522))
+	// 	{
+	// 		lockRFID = true;
+	// 	}
+	// }
+	CardDectecting(mfrc522);
 
 	if (!isRunning)
 	{
@@ -83,128 +116,128 @@ void loop()
 		return;
 	}
 
-	// printRawV]alues();
-	// Serial.println("");
+	// if (!BLUETOOTH_MODE)
+	// {
+	readIRValues();
 
-	if (!BLUETOOTH_MODE)
+	// Serial.print(", ");
+	// Serial.print(atNode);
+	// Serial.print(", ");
+	// Serial.print(getWeightedAvg());
+	// Serial.print(", ");
+
+	if (translationalBrake)
 	{
-		readIRValues();
-
-		// Serial.print(", ");
-		// Serial.print(atNode);
-		// Serial.print(", ");
-		// Serial.print(getWeightedAvg());
-		// Serial.print(", ");
-
-		if (translationalBrake)
+		if (millis() - timestamp < 100)
 		{
-			if (millis() - timestamp < 100)
-			{
-				drive(-255, -255);
-			}
-			else
-			{
-				drive(-10, -10);
-				// isRunning = false;
-				translationalBrake = false;
-				runPath();
-			}
+			drive(-255, -255);
 		}
-		else if (rotationalBrake)
+		else
 		{
-			if (millis() - timestamp < 50)
-			{
-				switch (turningDir)
-				{
-				case 1:
-					drive(-255, 255);
-					break;
-				case -1:
-					drive(255, -255);
-					break;
-				}
-			}
-			else
-			{
-				rotationalBrake = false;
-				atNode = false;
-				Serial3.println("STEP_DONE*");
-				path.remove(0, 1);
-				drive(10, -10);
-				// isRunning = false;
-			}
+			drive(-10, -10);
+			// isRunning = false;
+			translationalBrake = false;
+			runPath();
 		}
-		else if (atNode)
+	}
+	else if (rotationalBrake)
+	{
+		if (millis() - timestamp < 50)
 		{
-			if (getLeftIRValue() < 100 && getRightIRValue() < 100 && max(max(getRightCenterIRValue(), getCenterIRValue()), getLeftCenterIRValue()) > 100 && (millis() - timestamp) > ((path[0] == 'B') ? 800 : 400))
+			switch (turningDir)
 			{
-				if (path[0] == 'F')
-				{
-					Serial3.println("STEP_DONE*");
-					path.remove(0, 1);
-					lockRFID = false;
-					atNode = false;
-				}
-				else if (!rotationalBrake)
-				{
-					rotationalBrake = true;
-					timestamp = millis();
-					drive(0, 0);
-				}
+			case 1:
+				drive(-255, 255);
+				break;
+			case -1:
+				drive(255, -255);
+				break;
 			}
 		}
 		else
 		{
-			if (atNodeIR())
-			{
-				atNode = true;
-				if (path[0] == 'F')
-				{
-					runPath();
-				}
-				else if (!translationalBrake)
-				{
-					translationalBrake = true;
-					timestamp = millis();
-					drive(0, 0);
-				}
-			}
-			else
-			{
-				// if (path.length() > 1 && path[1] == 'F') {
-				// 	driveKinematic(255, -turn);
-				// } else {
-				// 	driveKinematic(NORMAL_SPEED, -turn);
-				// }
-				driveKinematic(NORMAL_SPEED, -turn);
-			}
+			rotationalBrake = false;
+			atNode = false;
+			Serial3.println("NX");
+			path.remove(0, 1);
+			drive(10, -10);
+			// isRunning = false;
+			lockRFID = false;
 		}
-
-		if (cmd == "BT")
+	}
+	else if (atNode)
+	{
+		if (getLeftIRValue() < 100 && getRightIRValue() < 100 && max(max(getRightCenterIRValue(), getCenterIRValue()), getLeftCenterIRValue()) > 100 && (millis() - timestamp) > ((path.length() > 0 && path[0] == 'B') ? 800 : 400))
 		{
-			BLUETOOTH_MODE = true;
-			drive(0, 0);
-			Serial.println("****Switched to BLUETOOTH mode.****");
+			if (path[0] == 'F')
+			{
+				driveKinematic(255, -turn);
+
+				Serial3.println("NX");
+				path.remove(0, 1);
+				atNode = false;
+				lockRFID = false;
+			}
+			else if (!rotationalBrake)
+			{
+				rotationalBrake = true;
+				timestamp = millis();
+				drive(0, 0);
+			}
 		}
 	}
 	else
 	{
-		if (cmd == "F")
-			drive(NORMAL_SPEED, NORMAL_SPEED); // �e�i
-		else if (cmd == "B")
-			drive(-NORMAL_SPEED, -NORMAL_SPEED); // ��h
-		else if (cmd == "L")
-			drive(-NORMAL_SPEED, NORMAL_SPEED); // ����
-		else if (cmd == "R")
-			drive(NORMAL_SPEED, -NORMAL_SPEED); // �k��
-		else if (cmd == "S")
-			drive(0, 0);
-		else if (cmd == "AUTO")
+		if (atNodeIR())
 		{
-			BLUETOOTH_MODE = false;
-			Serial.println("****Switched to AUTO mode.****");
+			atNode = true;
+			if (path[0] == 'F')
+			{
+				runPath();
+			}
+			else if (!translationalBrake)
+			{
+				translationalBrake = true;
+				timestamp = millis();
+				drive(0, 0);
+			}
+		}
+		else
+		{
+			// if (path.length() > 1 && path[1] == 'F') {
+			// 	driveKinematic(255, -turn);
+			// } else {
+			// 	driveKinematic(NORMAL_SPEED, -turn);
+			// }
+			driveKinematic(NORMAL_SPEED, -turn);
 		}
 	}
+
+	// if (cmd == "BT")
+	// {
+	// 	BLUETOOTH_MODE = true;
+	// 	drive(0, 0);
+	// 	Serial.println("****Switched to BLUETOOTH mode.****");
+	// }
+	// }
+	// else
+	// {
+	// if (cmd == "F")
+	// 	drive(NORMAL_SPEED, NORMAL_SPEED); // �e�i
+	// else if (cmd == "B")
+	// 	drive(-NORMAL_SPEED, -NORMAL_SPEED); // ��h
+	// else if (cmd == "L")
+	// 	drive(-NORMAL_SPEED, NORMAL_SPEED); // ����
+	// else if (cmd == "R")
+	// 	drive(NORMAL_SPEED, -NORMAL_SPEED); // �k��
+	// else if (cmd == "S")
+	// 	drive(0, 0);
+	// else if (cmd == "AUTO")
+	// {
+	// 	BLUETOOTH_MODE = false;
+	// 	// Serial.println("****Switched to AUTO mode.****");
+	// }
+	// }
 
 	// Serial.println(turn);
 	// delay(TIME_STEP);
@@ -243,7 +276,7 @@ void runPath()
 	}
 	else
 	{
-		isRunning = false;
+		// isRunning = false;
 		drive(0, 0);
 	}
 }

@@ -99,17 +99,21 @@ String BlueTooth()
     String command = "";
 
     // 1. ESP32 to PC: Forward HM-10 responses to the Serial Monitor
-    if (Serial3.available())
+    while (Serial3.available())
     {
-        command = Serial3.readString();
-        command.trim(); // IMPORTANT: Remove \r or \n, otherwise exact string matching will fail
-
-        // Debug: See what was received on the Serial Monitor
-        Serial.print("Bluetooth Received: [");
-        Serial.print(command);
-        Serial.println("]");
+        char c = (char)Serial3.read();
+        command += c;
     }
 
+    if (command.length() > 0)
+    {
+        command.trim();
+
+        // Debug: See what was received on the Serial Monitor
+        // Serial.print("Bluetooth Received: [");
+        // Serial.print(command);
+        // Serial.println("]");
+    }
     // 2. PC to ESP32: Read user input and truncate line endings
     if (Serial.available())
     {
@@ -122,9 +126,9 @@ String BlueTooth()
                 if (pcInputBuffer.length() > 0)
                 {
                     Serial3.print(pcInputBuffer); // Send to Bluetooth module
-                    Serial.print("\n[PC Command Sent to HM-10: ");
-                    Serial.print(pcInputBuffer);
-                    Serial.println("]");
+                    // Serial.print("\n[PC Command Sent to HM-10: ");
+                    // Serial.print(pcInputBuffer);
+                    // Serial.println("]");
 
                     pcInputBuffer = "";
                 }
