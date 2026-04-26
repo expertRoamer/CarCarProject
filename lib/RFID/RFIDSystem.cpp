@@ -32,6 +32,7 @@ bool CardDectecting(MFRC522 *mfrc522)
     // Serial3.println(F("**Card Detected!**"));
     if (uidString.length() < 12) return false;
     Serial3.println(uidString);
+    Serial3.println(uidString);
 
     // Serial.print("Sending to Bluetooth: ");
     // Serial.println(uidString);

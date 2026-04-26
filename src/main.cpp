@@ -15,7 +15,7 @@ MFRC522 *mfrc522;
 PIDController IR_PID(50, 0, 2000); // Previous :(60, 0, 100) turn : (50, 0, 100) 1000
 // PIDController TURN_PID(50, 0, 200); 60 200
 
-String path = ""; // A: clockwise 180; B: counterclockwise 180
+String path = "FFLFBFRRLRALLFRAF"; // A: clockwise 180; B: counterclockwise 180
 // FFLFBFRRLRALLFRAF
 // String path = ""; // Point-wise
 bool atNode = false;
@@ -37,6 +37,7 @@ bool rotationalBrake = false;
 int turningDir = 1; // 1: left turn brake; -1: right turn brake
 unsigned long timestamp = 0;
 unsigned long lastTime = 0;
+unsigned long startTime = 0;
 
 bool lockRFID = false;
 
@@ -88,23 +89,12 @@ void setup()
 	initialRun = 0;
 	path.remove(0,1);
 	Serial3.println("NX");
+	drive(NORMAL_SPEED, NORMAL_SPEED);
+	startTime = millis();
 }
 
 void loop()
 {
-	if (initialRun == 0) {
-		timestamp = millis();
-		initialRun = 1;
-	} else if (initialRun == 1) {
-		if (millis() - timestamp < 100) {
-			drive(NORMAL_SPEED, NORMAL_SPEED);
-		} else {
-			initialRun = 2;
-		}
-	}
-	// printRawValues();
-	// Serial.println("");
-	if (initialRun != 2) return;
 	while (Serial3.available() > 0)
 	{
 		char c = (char)Serial3.read();
@@ -115,7 +105,23 @@ void loop()
 			path += c;
 		}
 	}
-	if (path.length() == 0 || ((path.length() > 0 && path[0] == 'B') || (path.length() > 0 && path[0] == 'A')))
+
+	if (millis() - startTime < 200) return;
+
+	// if (initialRun == 0) {
+	// 	if (!atNodeIR()) {
+	// 		initialRun = 2;
+	// 		return;
+	// 	}
+	//
+	// 	drive(NORMAL_SPEED, NORMAL_SPEED);
+	// }
+	// // printRawValues();
+	// // Serial.println("");
+	// if (initialRun != 2) return;
+
+
+	if (path.length() == 0 || (path.length() > 0 && path[0] == 'B') || (path.length() > 0 && path[0] == 'A'))
 	{
 		if (CardDectecting(mfrc522) && !lockRFID)
 		{
@@ -153,7 +159,7 @@ void loop()
 
 	if (translationalBrake)
 	{
-		if (millis() - timestamp < 100)
+		if (millis() - timestamp < 100 )
 		{
 			drive(-255, -255);
 		}
@@ -201,7 +207,11 @@ void loop()
 	}
 	else if (atNode)
 	{
-		if (getLeftIRValue() < 100 && getRightIRValue() < 100 && max(max(getRightCenterIRValue(), getCenterIRValue()), getLeftCenterIRValue()) > 100 && (millis() - timestamp) > ((path.length() > 0 && ((path[0] == 'B') || (path[0] == 'A'))) ? 800 : 400))
+		int waitTime = 100;
+		if (path[0] == 'A' || path[0] == 'B') waitTime = 800;
+		else if (path[0] == 'L' || path[0] == 'R') waitTime = 500;
+
+		if (getLeftIRValue() < 100 && getRightIRValue() < 100 && max(max(getRightCenterIRValue(), getCenterIRValue()), getLeftCenterIRValue()) > 200  && millis() - timestamp > waitTime)
 		{
 			if (path[0] == 'F')
 			{

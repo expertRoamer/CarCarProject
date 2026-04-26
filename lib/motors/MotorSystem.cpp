@@ -67,12 +67,12 @@ void driveFor(double vL, double vR, int time)
 
 void driveLeft(double v)
 {
+    v *= SPEED_ADUSTING_CONSTANT; // scaling adjustment for left motor
     driveIndividual(MOTOR_PWMA, MOTOR_AIN1, MOTOR_AIN2, v);
 }
 
 void driveRight(double v)
 {
-    v *= SPEED_ADUSTING_CONSTANT; // scaling adjustment for right motor
     driveIndividual(MOTOR_PWMB, MOTOR_BIN1, MOTOR_BIN2, v);
 }
 

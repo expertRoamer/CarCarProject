@@ -68,7 +68,7 @@ def execute_auto_path(bridge, path_string, point):
                 # Filter fragments: skip if shorter than 8 chars
                 if len(clean_uid) < 8:
                     print(f"Warning: UID length incorrect ({len(clean_uid)} chars). Skipped.")
-                    print(f"Received: {clean_uid}")
+                    print(f"Received: {msg}")
                     continue
                 
                 # Anti-spam: skip if this card was already scored
