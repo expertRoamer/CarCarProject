@@ -3,7 +3,7 @@
 
 #define TIME_STEP 5
 #define SPEED_ADUSTING_CONSTANT 0.94
-#define NORMAL_SPEED 170
+#define NORMAL_SPEED 170 //stable : 170
 #define CARCAR_NAME "HM10_G6"
 #define LEAVE_NODE_THRESHOLD (-2.00)
 

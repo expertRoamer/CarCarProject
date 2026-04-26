@@ -20,6 +20,9 @@ String path = ""; // Point-wise
 bool atNode = false;
 bool first = true;
 
+int initialRun = 0;
+bool startReturn = false;
+
 double turn = 0.0;
 int fullRotate = 1000, halfRotate = 500;
 
@@ -54,7 +57,7 @@ void setup()
 	pinMode(IR_RIGHT_CENTER, INPUT);
 	pinMode(IR_RIGHT, INPUT);
 
-	BlueToothInit();
+	// BlueToothInit();
 
 	// Serial.begin(115200);
 	Serial.begin(9600);
@@ -80,10 +83,27 @@ void setup()
 		}
 		delay(10);
 	}
+
+	initialRun = 0;
+	path.remove(0,1);
+	Serial3.println("NX");
 }
 
 void loop()
 {
+	if (initialRun == 0) {
+		timestamp = millis();
+		initialRun = 1;
+	} else if (initialRun == 1) {
+		if (millis() - timestamp < 100) {
+			drive(NORMAL_SPEED, NORMAL_SPEED);
+		} else {
+			initialRun = 2;
+		}
+	}
+	// printRawValues();
+	// Serial.println("");
+	if (initialRun != 2) return;
 	while (Serial3.available() > 0)
 	{
 		char c = (char)Serial3.read();
@@ -94,7 +114,7 @@ void loop()
 			path += c;
 		}
 	}
-	if (path.length() == 0 || (path.length() > 0 && path[0] == 'B'))
+	if (path.length() == 0 || ((path.length() > 0 && path[0] == 'B') || (path.length() > 0 && path[0] == 'A')))
 	{
 		if (CardDectecting(mfrc522) && !lockRFID)
 		{
@@ -108,7 +128,7 @@ void loop()
 	// 		lockRFID = true;
 	// 	}
 	// }
-	CardDectecting(mfrc522);
+	// CardDectecting(mfrc522);
 
 	if (!isRunning)
 	{
@@ -167,12 +187,11 @@ void loop()
 	}
 	else if (atNode)
 	{
-		if (getLeftIRValue() < 100 && getRightIRValue() < 100 && max(max(getRightCenterIRValue(), getCenterIRValue()), getLeftCenterIRValue()) > 100 && (millis() - timestamp) > ((path.length() > 0 && path[0] == 'B') ? 800 : 400))
+		if (getLeftIRValue() < 100 && getRightIRValue() < 100 && max(max(getRightCenterIRValue(), getCenterIRValue()), getLeftCenterIRValue()) > 100 && (millis() - timestamp) > ((path.length() > 0 && ((path[0] == 'B') || (path[0] == 'A'))) ? 800 : 400))
 		{
 			if (path[0] == 'F')
 			{
 				driveKinematic(255, -turn);
-
 				Serial3.println("NX");
 				path.remove(0, 1);
 				atNode = false;
@@ -256,7 +275,7 @@ void runPath()
 	}
 	else if (command == 'L')
 	{
-		drive(15, 150);
+		drive(0, 150);
 		turningDir = -1;
 	}
 	else if (command == 'R')

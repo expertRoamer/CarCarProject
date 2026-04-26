@@ -1,9 +1,7 @@
 #include "RFIDSystem.h"
 #include <Arduino.h>
 
-String uids[20];
-unsigned long timestamps[20];
-int i = 0;
+
 // String CARD = "45764D73";
 
 bool CardDectecting(MFRC522 *mfrc522)
@@ -47,15 +45,10 @@ bool CardDectecting(MFRC522 *mfrc522)
     //     }
     // }
     // else
-    {
-        uids[i] = uidString;
-        timestamps[i] = millis();
-        i++;
-    }
 
     // ---------------------------------------
 
-    mfrc522->PICC_HaltA();      // ���d���i�J����Ҧ�?
+    mfrc522->PICC_HaltA();      // ���d���i�J����Ҧ�?
     mfrc522->PCD_StopCrypto1(); // ����[�K����
 
     return true;
