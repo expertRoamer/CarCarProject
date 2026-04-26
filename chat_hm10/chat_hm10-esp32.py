@@ -5,7 +5,7 @@ from hm10_esp32 import HM10ESP32Bridge
 from score import ScoreboardServer
 
 # === Project Environment Settings ===
-PORT = 'COM5'
+PORT = 'COM7'
 EXPECTED_NAME = 'HM10_G6'
 TEAM_NAME = "食致銘龜"
 SERVER_URL = "http://carcar.ntuee.org/scoreboard"
@@ -37,7 +37,7 @@ def execute_auto_path(bridge, path_string, point):
             time.sleep(0.1)
 
     # 2. Enter Sliding Window Listener Loop
-    while ack_count < total_steps:
+    while ack_count <= total_steps:
         msg = bridge.listen()
         
         # Process any received signal immediately
@@ -68,6 +68,7 @@ def execute_auto_path(bridge, path_string, point):
                 # Filter fragments: skip if shorter than 8 chars
                 if len(clean_uid) < 8:
                     print(f"Warning: UID length incorrect ({len(clean_uid)} chars). Skipped.")
+                    print(f"Received: {clean_uid}")
                     continue
                 
                 # Anti-spam: skip if this card was already scored
@@ -79,10 +80,10 @@ def execute_auto_path(bridge, path_string, point):
                     print(f"\n[RFID] Treasure found! Read UID: {clean_uid}")
                     try:
                         current_score, time_left = point.add_UID(clean_uid)
-                        # point.add_UID("F159AF1E")
                         # point.add_UID("53FE3C31")
                         # point.add_UID("5205171E")
                         # point.add_UID("9AC053BD")
+                        # point.add_UID("F159AF1E")
                         # point.add_UID("00000000")
                         # point.add_UID("11111111")
                         # point.add_UID("22222222")
@@ -154,11 +155,11 @@ def main():
     
     # 3. Initialize Scoreboard Server
     print("Connecting to the competition server...")
-    point = ScoreboardServer(TEAM_NAME, SERVER_URL)
+    # point = ScoreboardServer(TEAM_NAME, SERVER_URL)
 
     # 4. Start Auto-Navigation and Scoring
     try:
-        execute_auto_path(bridge, BFS_RESULT, point)
+        execute_auto_path(bridge, BFS_RESULT, 0)
     except KeyboardInterrupt:
         print("\nUser interrupted. Sending emergency stop command...")
         bridge.send("S")

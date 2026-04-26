@@ -6,8 +6,8 @@ int values[5] = {0, 0, 0, 0, 0};
 double w[5] = {-2, -1, 0, 1, 2};
 
 unsigned long lastAtNode = 0;
-double IR_Low[] = {53, 30, 29, 72, 32};
-double IR_High[] = {333, 307, 341, 390, 498};
+double IR_Low[] = {72, 29, 28, 68, 31};
+double IR_High[] = {345, 341, 379, 429, 559};
 
 void readIRValues()
 {
@@ -110,7 +110,12 @@ int linear(int x, double low, double high)
 
 bool atNodeIR()
 {
-    if ((millis() - lastAtNode >= 200 || lastAtNode == 0) && (getLeftIRValue() > 200 || getRightIRValue() > 200) && getCenterIRValue() > 200 && getLeftCenterIRValue() > 200 && getRightCenterIRValue() > 20)
+    int threshold = 150;
+    bool leftthree = getLeftIRValue() > threshold && getLeftCenterIRValue() > threshold && getCenterIRValue() > threshold;
+    bool centerthree = getCenterIRValue() > threshold && getLeftCenterIRValue() > threshold && getRightCenterIRValue() > threshold;
+    bool rightthree = getRightCenterIRValue() > threshold && getCenterIRValue() > threshold && getRightIRValue() > threshold;
+
+    if ((millis() - lastAtNode >= 200 || lastAtNode == 0) && (leftthree || centerthree || rightthree))
     {
         lastAtNode = millis();
         return true;

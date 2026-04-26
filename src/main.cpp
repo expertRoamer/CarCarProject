@@ -12,11 +12,12 @@
 
 MFRC522 *mfrc522;
 
-PIDController IR_PID(50, 0, 1000); // Previous :(60, 0, 100) turn : (50, 0, 100)
+PIDController IR_PID(50, 0, 2000); // Previous :(60, 0, 100) turn : (50, 0, 100) 1000
 // PIDController TURN_PID(50, 0, 200); 60 200
 
-// String path = "FFLFBFRRLRALLFRAF"; // A: clockwise 180; B: counterclockwise 180
-String path = ""; // Point-wise
+String path = ""; // A: clockwise 180; B: counterclockwise 180
+// FFLFBFRRLRALLFRAF
+// String path = ""; // Point-wise
 bool atNode = false;
 bool first = true;
 
@@ -121,6 +122,10 @@ void loop()
 			lockRFID = true;
 		}
 	}
+
+	// printRawValues();
+	// Serial.println("");
+
 	// if (!lockRFID)
 	// {
 	// 	if (CardDectecting(mfrc522))
@@ -180,7 +185,16 @@ void loop()
 			atNode = false;
 			Serial3.println("NX");
 			path.remove(0, 1);
-			drive(10, -10);
+
+			switch (turningDir) {
+				case 1:
+					drive(-10, 10);
+					break;
+				case -1:
+					drive(10, -10);
+					break;
+			}
+
 			// isRunning = false;
 			lockRFID = false;
 		}
@@ -191,7 +205,8 @@ void loop()
 		{
 			if (path[0] == 'F')
 			{
-				driveKinematic(255, -turn);
+				driveKinematic(NORMAL_SPEED, -turn);
+
 				Serial3.println("NX");
 				path.remove(0, 1);
 				atNode = false;
@@ -218,7 +233,7 @@ void loop()
 			{
 				translationalBrake = true;
 				timestamp = millis();
-				drive(0, 0);
+				drive(10, 10);
 			}
 		}
 		else
