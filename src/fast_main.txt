@@ -20,7 +20,6 @@ PIDController IR_PID(50, 0, 2000); // Previous :(60, 0, 100) turn : (50, 0, 100)
 String path = ""; // Point-wise
 bool atNode = false;
 bool first = true;
-bool isEnd = false;
 
 int initialRun = 0;
 bool startReturn = false;
@@ -164,10 +163,6 @@ void loop()
 
 	if (!isRunning)
 	{
-		if (!isEnd) {
-			isEnd = true;
-			Serial2.println("Time: " + String(millis() - startTime));
-		}
 		drive(0, 0);
 		return;
 	}

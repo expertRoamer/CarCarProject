@@ -2,7 +2,7 @@
 #include <Arduino.h>
 
 
-// String CARD = "45764D73";
+String lastUID;
 
 bool CardDectecting(MFRC522 *mfrc522)
 {
@@ -31,7 +31,7 @@ bool CardDectecting(MFRC522 *mfrc522)
 
     // Serial3.println(F("**Card Detected!**"));
     if (uidString.length() < 12) return false;
-    Serial3.println(uidString);
+    lastUID = uidString;
     Serial3.println(uidString);
 
     // Serial.print("Sending to Bluetooth: ");
@@ -54,4 +54,8 @@ bool CardDectecting(MFRC522 *mfrc522)
     mfrc522->PCD_StopCrypto1(); // ����[�K����
 
     return true;
+}
+
+void resendUID() {
+    Serial3.println(lastUID);
 }

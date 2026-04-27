@@ -5,4 +5,6 @@
 
 bool CardDectecting(MFRC522 *);
 
+void resendUID();
+
 #endif // RFIDSYSTEM_H

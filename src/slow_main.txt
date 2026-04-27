@@ -96,7 +96,7 @@ void setup()
 
 	initialRun = 0;
 	// delay(1000);
-	drive(255, 255);
+	drive(170, 170);
 
 	startTime = millis();
 
@@ -135,7 +135,7 @@ void loop()
 			return;
 		}
 
-		drive(255, 255);
+		drive(170, 170);
 	}
 	// printRawValues();
 	// Serial.println("");
@@ -164,11 +164,11 @@ void loop()
 
 	if (!isRunning)
 	{
+		drive(0, 0);
 		if (!isEnd) {
 			isEnd = true;
-			Serial2.println("Time: " + String(millis() - startTime));
+			Serial3.println("time: " + String(millis() - startTime));
 		}
-		drive(0, 0);
 		return;
 	}
 
@@ -184,7 +184,7 @@ void loop()
 
 	if (translationalBrake)
 	{
-		if (millis() - timestamp < 200 ) // 100
+		if (millis() - timestamp < 100 ) // 100
 		{
 			drive(-255, -255);
 		}
@@ -243,7 +243,7 @@ void loop()
 		{
 			if (path[0] == 'F')
 			{
-				driveKinematic(255, -turn);
+				driveKinematic(170, -turn);
 
 				Serial3.println("NX");
 				lastPath = path[0];
@@ -283,8 +283,7 @@ void loop()
 		else
 		{
 
-			if (path[0] == 'B') driveKinematic(170, -turn);
-			else driveKinematic(255, -turn);
+			driveKinematic(170, -turn);
 		}
 	}
 
@@ -298,13 +297,13 @@ void loop()
 	// else
 	// {
 	// if (cmd == "F")
-	// 	drive(255, 255); // �e�i
+	// 	drive(170, 170); // �e�i
 	// else if (cmd == "B")
-	// 	drive(-255, -255); // ��h
+	// 	drive(-170, -170); // ��h
 	// else if (cmd == "L")
-	// 	drive(-255, 255); // ����
+	// 	drive(-170, 170); // ����
 	// else if (cmd == "R")
-	// 	drive(255, -255); // �k��
+	// 	drive(170, -170); // �k��
 	// else if (cmd == "S")
 	// 	drive(0, 0);
 	// else if (cmd == "AUTO")
@@ -358,9 +357,9 @@ void runPath()
 
 void runTurn() {
 	char command = path.charAt(0);
-	double startVel = 255;
+	double startVel = 170;
 	double endVel = 70;
-	int duration = 350;
+	int duration = 400;
 	int elapsedTime = min(millis() - startTurnTime, duration);
 	double output = startVel - (startVel - endVel) * elapsedTime / duration;
 
@@ -372,22 +371,22 @@ void runTurn() {
 
 	if (command == 'L')
 	{
-		drive(0, output1); // output1
+		drive(0, 150); // output1
 		turningDir = -1;
 	}
 	else if (command == 'R')
 	{
-		drive(output1, 0); // output1
+		drive(150, 0); // output1
 		turningDir = 1;
 	}
 	else if (command == 'B')
 	{
-		drive(-output, output); // 70
+		drive(-70, 70); // 70
 		turningDir = -1;
 	}
 	else if (command == 'A')
 	{
-		drive(output, -output);
+		drive(70, -70);
 		turningDir = 1;
 	}
 	else
