@@ -1,7 +1,6 @@
 #include "RFIDSystem.h"
 #include <Arduino.h>
 
-
 // String CARD = "45764D73";
 
 bool CardDectecting(MFRC522 *mfrc522)
@@ -29,9 +28,10 @@ bool CardDectecting(MFRC522 *mfrc522)
     }
     uidString.toUpperCase(); // �ন�j�g��K�\Ū
 
-    // Serial3.println(F("**Card Detected!**"));
-    if (uidString.length() < 12) return false;
+    if (uidString.length() < 12)
+        return false;
     Serial3.println(uidString);
+    // delay(2);
     Serial3.println(uidString);
 
     // Serial.print("Sending to Bluetooth: ");
@@ -50,8 +50,8 @@ bool CardDectecting(MFRC522 *mfrc522)
 
     // ---------------------------------------
 
-    mfrc522->PICC_HaltA();      // ���d���i�J����Ҧ�?
-    mfrc522->PCD_StopCrypto1(); // ����[�K����
+    mfrc522->PICC_HaltA();
+    mfrc522->PCD_StopCrypto1();
 
     return true;
 }

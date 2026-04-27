@@ -6,8 +6,8 @@ int values[5] = {0, 0, 0, 0, 0};
 double w[5] = {-2, -1, 0, 1, 2};
 
 unsigned long lastAtNode = 0;
-double IR_Low[] = {38, 30, 29, 33, 29};
-double IR_High[] = {345, 341, 379, 429, 559};
+double IR_Low[] = {43, 28, 25, 49, 27};
+double IR_High[] = {367, 313, 320, 376, 441};
 
 void readIRValues()
 {
