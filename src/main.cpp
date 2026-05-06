@@ -20,7 +20,6 @@ PIDController IR_PID(50, 0, 2000); // Previous :(60, 0, 100) turn : (50, 0, 100)
 String path = ""; // Point-wise
 bool atNode = false;
 bool first = true;
-bool isEnd = false;
 
 int initialRun = 0;
 bool startReturn = false;
@@ -164,10 +163,6 @@ void loop()
 
 	if (!isRunning)
 	{
-		if (!isEnd) {
-			isEnd = true;
-			Serial2.println("Time: " + String(millis() - startTime));
-		}
 		drive(0, 0);
 		return;
 	}
@@ -184,9 +179,16 @@ void loop()
 
 	if (translationalBrake)
 	{
-		if (millis() - timestamp < 200 ) // 100
+
+		double time = 200;
+
+		if (millis() - timestamp < time ) // 100
 		{
-			drive(-255, -255);
+			if (path[0] == 'L') {
+				drive(-255, 150);
+			} else if (path[0] == 'R') {
+				drive(150, -255);
+			} else drive(-255, -255);
 		}
 		else
 		{
@@ -237,7 +239,7 @@ void loop()
 	{
 		int waitTime = 100;
 		if (path[0] == 'A' || path[0] == 'B') waitTime = 800;
-		else if (path[0] == 'L' || path[0] == 'R') waitTime = 500;
+		else if (path[0] == 'L' || path[0] == 'R') waitTime = 250;
 
 		if (getLeftIRValue() < 100 && getRightIRValue() < 100 && max(max(getRightCenterIRValue(), getCenterIRValue()), getLeftCenterIRValue()) > 200  && millis() - timestamp > waitTime)
 		{
@@ -364,7 +366,7 @@ void runTurn() {
 	int elapsedTime = min(millis() - startTurnTime, duration);
 	double output = startVel - (startVel - endVel) * elapsedTime / duration;
 
-	double startVel1 = 255;
+	double startVel1 = 150;
 	double endVel1 = 150;
 	int duration1 = 300;
 	int elapsedTime1 = min(millis() - startTurnTime, duration1);
